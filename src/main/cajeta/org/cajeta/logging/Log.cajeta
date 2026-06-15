@@ -1,0 +1,14 @@
+package org.cajeta.logging;
+
+// Build-ready placeholder for the cajeta-logging public facade.
+//
+// The real API — structured loggers, JSONL appenders, the per-request system
+// log, and the metrics bridge — is specified in docs/logging-spec.md and
+// staged in plan/logging-plan.md. This stub exists so the library compiles to
+// a .cja out of the box; replace it as the API lands.
+public class Log {
+
+    public String name(String logger) {
+        return logger;
+    }
+}
