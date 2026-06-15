@@ -1,14 +1,37 @@
 package org.cajeta.logging;
 
-// Build-ready placeholder for the cajeta-logging public facade.
-//
-// The real API — structured loggers, JSONL appenders, the per-request system
-// log, and the metrics bridge — is specified in docs/logging-spec.md and
-// staged in plan/logging-plan.md. This stub exists so the library compiles to
-// a .cja out of the box; replace it as the API lands.
-public class Log {
+/**
+ * Entry facade for cajeta-logging. Tier-1 factories that wire a `Logger` to an
+ * encoder + appender with no DI container (DI wiring is Phase 3). See
+ * `docs/logging-spec.md` for the full design and `plan/logging-plan.md` for the
+ * roadmap (Tier 2 adds ambient context over `cajeta.concurrent.FiberLocal`).
+ */
+public final class Log {
 
-    public String name(String logger) {
-        return logger;
+    /** A logger that emits compact JSONL to stdout at/above `threshold`. */
+    public static #Logger console(String name, Level threshold) {
+        return heap Logger(name, threshold, heap JsonlEncoder(), heap ConsoleAppender());
+    }
+
+    /** A logger that captures encoded lines in-memory (for tests). */
+    public static #Logger capturing(String name, Level threshold, #CapturingAppender sink) {
+        return heap Logger(name, threshold, heap JsonlEncoder(), sink);
+    }
+
+    /**
+     * Smoke demo for `cajeta jit-run org.cajeta.logging.Log.demo`: emits two
+     * JSONL lines to stdout (an INFO with no fields, a WARN with three fields)
+     * and verifies the DEBUG line is gated out.
+     */
+    public static void demo() {
+        Logger log = Log.console("demo", Level.INFO);
+
+        log.info("service started");
+
+        LogRecord r = log.event(Level.WARN, "slow request");
+        r.str("route", "/checkout").i64("ms", 1200).flag("retried", true);
+        log.emit(#r);
+
+        log.debug("below threshold — should not appear");
     }
 }

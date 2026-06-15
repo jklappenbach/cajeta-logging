@@ -1,0 +1,40 @@
+package org.cajeta.logging;
+
+/**
+ * Helpers over `Level`. cajeta enums are bare (no methods), so severity ranking
+ * and display names live here as static functions keyed off `==` comparison.
+ */
+public final class Levels {
+
+    /** Severity rank — higher is more severe. Used for threshold gating. */
+    public static int32 severity(Level l) {
+        if (l == Level.TRACE) {
+            return 0;
+        } else if (l == Level.DEBUG) {
+            return 1;
+        } else if (l == Level.INFO) {
+            return 2;
+        } else if (l == Level.WARN) {
+            return 3;
+        } else if (l == Level.ERROR) {
+            return 4;
+        }
+        return 5; // OFF
+    }
+
+    /** Uppercase display name for encoders. */
+    public static String name(Level l) {
+        if (l == Level.TRACE) {
+            return "TRACE";
+        } else if (l == Level.DEBUG) {
+            return "DEBUG";
+        } else if (l == Level.INFO) {
+            return "INFO";
+        } else if (l == Level.WARN) {
+            return "WARN";
+        } else if (l == Level.ERROR) {
+            return "ERROR";
+        }
+        return "OFF";
+    }
+}

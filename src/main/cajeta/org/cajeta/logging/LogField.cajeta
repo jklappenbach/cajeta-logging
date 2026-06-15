@@ -1,0 +1,29 @@
+package org.cajeta.logging;
+
+/**
+ * One structured key/value pair on a `LogRecord`. A lightweight tagged value
+ * (not a `JsonValue`) so building a field is alloc-light and every encoder
+ * renders it by switching on `kind` — the design the logging spec's acceptance
+ * criterion #1 (alloc-free below threshold) calls for.
+ *
+ * `kind`: 0 = string, 1 = int64, 2 = boolean, 3 = float64.
+ * The unused payload slots are left at their zero/empty defaults — `sval` is
+ * always a real (possibly empty) String, never null, so the drop chain stays sound.
+ */
+public final class LogField {
+    public String key;
+    public int32 kind;
+    public String sval;
+    public int64 ival;
+    public boolean bval;
+    public float64 fval;
+
+    public LogField(String key, int32 kind) {
+        this.key = key;
+        this.kind = kind;
+        this.sval = "";
+        this.ival = 0;
+        this.bval = false;
+        this.fval = 0.0;
+    }
+}

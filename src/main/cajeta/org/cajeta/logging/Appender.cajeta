@@ -1,0 +1,9 @@
+package org.cajeta.logging;
+
+/**
+ * Sink for an encoded line. Takes ownership of the bytes (`#int8[]`) and is
+ * responsible for line termination (newline, flush, etc.).
+ */
+public interface Appender {
+    public void append(#int8[] line);
+}

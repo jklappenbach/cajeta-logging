@@ -1,0 +1,66 @@
+package org.cajeta.logging;
+
+import cajeta.collection.ArrayList;
+
+/**
+ * One log event: timestamp (epoch millis), level, logger name, message, and an
+ * ordered list of structured fields. Fields are added with the fluent
+ * `str`/`i64`/`f64`/`flag` methods, each returning `this` for chaining (the same
+ * concrete-class fluent style `JsonWriter` uses):
+ *
+ * ```cajeta
+ * LogRecord r = log.event(Level.WARN, "slow request");
+ * r.str("route", "/checkout").i64("ms", 1200).flag("retried", true);
+ * log.emit(#r);
+ * ```
+ *
+ * Method names avoid the primitive type keywords (`int64`/`float64`/`boolean`):
+ * `i64` = int64 field, `f64` = float64 field, `flag` = boolean field.
+ */
+public final class LogRecord {
+    public int64 ts;
+    public Level level;
+    public String logger;
+    public String msg;
+    public ArrayList<LogField> fields;
+
+    public LogRecord(int64 ts, Level level, String logger, String msg) {
+        this.ts = ts;
+        this.level = level;
+        this.logger = logger;
+        this.msg = msg;
+        this.fields = heap ArrayList<LogField>();
+    }
+
+    /** Add a string-valued field. */
+    public LogRecord str(String key, String value) {
+        LogField f = heap LogField(key, 0);
+        f.sval = value;
+        this.fields.add(#f);
+        return this;
+    }
+
+    /** Add an int64-valued field. */
+    public LogRecord i64(String key, int64 value) {
+        LogField f = heap LogField(key, 1);
+        f.ival = value;
+        this.fields.add(#f);
+        return this;
+    }
+
+    /** Add a boolean-valued field. */
+    public LogRecord flag(String key, boolean value) {
+        LogField f = heap LogField(key, 2);
+        f.bval = value;
+        this.fields.add(#f);
+        return this;
+    }
+
+    /** Add a float64-valued field. */
+    public LogRecord f64(String key, float64 value) {
+        LogField f = heap LogField(key, 3);
+        f.fval = value;
+        this.fields.add(#f);
+        return this;
+    }
+}
