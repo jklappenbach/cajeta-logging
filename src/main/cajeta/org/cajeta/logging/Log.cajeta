@@ -34,4 +34,14 @@ public final class Log {
 
         log.debug("below threshold — should not appear");
     }
+
+    /**
+     * Native entry shim (`--emit=exe org.cajeta.logging.Log.run`): runs the
+     * demo, exits 0. A standalone smoke point while `jit-run` is blocked here by
+     * the reflection-thunk env gap.
+     */
+    public static int32 run() {
+        Log.demo();
+        return 0;
+    }
 }
