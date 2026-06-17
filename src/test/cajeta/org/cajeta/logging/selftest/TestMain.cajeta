@@ -1,0 +1,14 @@
+package org.cajeta.logging.selftest;
+
+import org.cajeta.unit.Runner;
+
+/**
+ * Test entry: reflective discovery runs every `@Test` across the binary.
+ * Returns 0 when all green, 1 on any failure — the build tool's `test`
+ * action turns that into the suite's pass/fail.
+ */
+public final class TestMain {
+    public static int32 run() {
+        return Runner.runAll();
+    }
+}

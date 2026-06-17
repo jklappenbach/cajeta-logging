@@ -1,0 +1,60 @@
+package org.cajeta.logging.selftest;
+
+import org.cajeta.unit.Assert;
+import org.cajeta.logging.Log;
+import org.cajeta.logging.Logger;
+import org.cajeta.logging.Level;
+import org.cajeta.logging.LogRecord;
+import org.cajeta.logging.CapturingAppender;
+
+/**
+ * Tier-1 Phase 1 tests for cajeta-logging, driven by cajeta-unit's reflective
+ * `@Test` discovery. Each test wires a `Logger` to a `CapturingAppender` (the
+ * spec's test sink) via `Log.capturing`, exercises the facade, and asserts on
+ * the captured JSONL line(s).
+ */
+public class LoggingTest {
+
+    public LoggingTest() {
+        return;
+    }
+
+    @Test
+    public void infoLineIsCapturedAsJsonl() {
+        CapturingAppender sink = heap CapturingAppender();
+        Logger log = Log.capturing("svc", Level.INFO, #sink);
+        log.info("service started");
+        Assert.that(sink.count()).isEqualTo(1);
+        String line = sink.get(0);
+        Assert.that(line).contains("\"level\":\"INFO\"");
+        Assert.that(line).contains("\"logger\":\"svc\"");
+        Assert.that(line).contains("\"msg\":\"service started\"");
+        return;
+    }
+
+    @Test
+    public void belowThresholdIsGatedOut() {
+        CapturingAppender sink = heap CapturingAppender();
+        Logger log = Log.capturing("svc", Level.WARN, #sink);
+        log.info("not severe enough");
+        Assert.that(sink.count()).isEqualTo(0);
+        log.warn("now we are talking");
+        Assert.that(sink.count()).isEqualTo(1);
+        return;
+    }
+
+    @Test
+    public void fieldsRenderAfterReservedKeys() {
+        CapturingAppender sink = heap CapturingAppender();
+        Logger log = Log.capturing("svc", Level.INFO, #sink);
+        LogRecord r = log.event(Level.WARN, "slow request");
+        r.str("route", "/checkout").i64("ms", 1200).flag("retried", true);
+        log.emit(#r);
+        Assert.that(sink.count()).isEqualTo(1);
+        String line = sink.get(0);
+        Assert.that(line).contains("\"route\":\"/checkout\"");
+        Assert.that(line).contains("\"ms\":1200");
+        Assert.that(line).contains("\"retried\":true");
+        return;
+    }
+}
