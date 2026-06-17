@@ -1,0 +1,58 @@
+package org.cajeta.logging.selftest;
+
+import org.cajeta.unit.Assert;
+import org.cajeta.logging.Logger;
+import org.cajeta.logging.Level;
+import org.cajeta.logging.JsonlEncoder;
+import org.cajeta.logging.FileAppender;
+import cajeta.io.file.File;
+import cajeta.io.file.OpenMode;
+import cajeta.lang.String;
+
+/**
+ * Phase 3 appender tests. `FileAppender` writes each encoded line + newline to
+ * a file; the test logs through a `Logger` wired to a `FileAppender`, then
+ * reads the file back and asserts on its contents.
+ */
+public class AppenderTest {
+
+    public AppenderTest() {
+        return;
+    }
+
+    @Test
+    public void fileAppenderWritesOneJsonlLinePerRecord() {
+        String path = "/tmp/cajeta_logging_fileappender_test.jsonl";
+        FileAppender out = heap FileAppender(path, OpenMode.WRITE);
+        Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), #out);
+        log.info("first");
+        log.info("second");
+        out.close();
+
+        int8[] bytes = File.readAllBytes(path);
+        int32 n = (int32) bytes.count();
+        String content = heap String(#bytes, n);
+        Assert.that(content).contains("\"msg\":\"first\"");
+        Assert.that(content).contains("\"msg\":\"second\"");
+        // Two records → two newlines (one per line).
+        Assert.that(content).contains("\"logger\":\"svc\"");
+        return;
+    }
+
+    @Test
+    public void fileAppenderGatesBelowThreshold() {
+        String path = "/tmp/cajeta_logging_fileappender_gate.jsonl";
+        FileAppender out = heap FileAppender(path, OpenMode.WRITE);
+        Logger log = heap Logger("svc", Level.WARN, heap JsonlEncoder(), #out);
+        log.info("should not appear");
+        log.warn("kept");
+        out.close();
+
+        int8[] bytes = File.readAllBytes(path);
+        int32 n = (int32) bytes.count();
+        String content = heap String(#bytes, n);
+        Assert.that(content).contains("\"msg\":\"kept\"");
+        Assert.isFalse(content.contains("should not appear"));
+        return;
+    }
+}

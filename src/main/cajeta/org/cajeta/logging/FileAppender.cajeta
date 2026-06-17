@@ -1,0 +1,39 @@
+package org.cajeta.logging;
+
+import cajeta.io.file.File;
+import cajeta.io.file.FileWriter;
+import cajeta.io.file.OpenMode;
+import cajeta.lang.String;
+
+/**
+ * Writes each encoded line (plus a trailing newline) to a file through a
+ * streaming `FileWriter`. Open with `OpenMode.APPEND` for a normal service log
+ * (preserves existing content across restarts); `OpenMode.WRITE` truncates on
+ * open. Flushes per line for durability — a buffered / worker-fiber variant is
+ * a later pass (`AsyncAppender`, Phase 3). Call `close()` to release the fd.
+ *
+ * ```cajeta
+ * FileAppender out = heap FileAppender("/var/log/app.jsonl", OpenMode.APPEND);
+ * Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), #out);
+ * ```
+ */
+public final class FileAppender implements Appender {
+    FileWriter writer;
+
+    public FileAppender(String path, OpenMode mode) {
+        this.writer = File.openWrite(path, mode);
+    }
+
+    public void append(#int8[] line) {
+        int32 n = (int32) line.count();
+        String s = heap String(#line, n);
+        this.writer.writeString(s);
+        this.writer.writeString("\n");
+        this.writer.flush();
+    }
+
+    /** Flush and release the underlying file descriptor. */
+    public void close() {
+        this.writer.close();
+    }
+}

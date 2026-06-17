@@ -58,8 +58,9 @@ local one, giving some implementers a wrong interface vtable → SIGSEGV — sid
 the `LogEncoder` rename; compiler name-resolution fix tracked separately._
 
 ### Phase 3 — appenders & config  *(Tier 1)*
-- [ ] `Appender` interface; `ConsoleAppender` (stdout/stderr, TTY detect for color),
-      `FileAppender`, `RollingFileAppender` (`cajeta.io.file`, size/time rolling).
+- [~] `Appender` interface ✅; `ConsoleAppender` ✅ (TTY color deferred); `FileAppender` ✅
+      (`cajeta.io.file`, `OpenMode.APPEND`/`WRITE`, flush-per-line; `AppenderTest` 2 cases,
+      file round-trip + threshold gating). `RollingFileAppender` (size/time rolling) TODO.
 - [ ] `AsyncAppender` over a worker fiber + `Channel<LogRecord>`; back-pressure policy
       (block / drop-oldest / drop-newest).
 - [ ] `LoggerFactory` as `@Component` (singleton); appenders/encoder as components;

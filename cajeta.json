@@ -21,7 +21,8 @@
         // Declare only what the library's public API actually needs. A
         // pure-computation library may need none at all; capabilities are
         // re-validated against the consumer's manifest at the point of use.
-        "capabilities": [],
+        // `filesystem`: FileAppender writes log lines through cajeta.io.file.
+        "capabilities": ["filesystem"],
 
         // Third-party runtime dependencies. The core stdlib (cajeta.lang,
         // cajeta.io, cajeta.codec, …) is built into the toolchain — neither
