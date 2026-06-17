@@ -1,0 +1,77 @@
+package org.cajeta.logging;
+
+import cajeta.time.Clock;
+
+/**
+ * The logging facade. Owns its encoder and appender; gates by severity against
+ * `threshold`. Two usage shapes:
+ *
+ * ```cajeta
+ * log.info("service started");                 // convenience, no fields
+ *
+ * LogRecord r = log.event(Level.WARN, "slow");  // fielded
+ * r.str("route", "/checkout").i64("ms", 1200);
+ * log.emit(#r);
+ * ```
+ *
+ * Below-threshold convenience calls build nothing; for the fielded form, gate
+ * with `enabled(level)` before building the record to stay allocation-free
+ * (SLF4J `isDebugEnabled` style). A zero-alloc no-op builder is a later perf pass.
+ */
+public final class Logger {
+    public String name;
+    public Level threshold;
+    Encoder encoder;
+    Appender appender;
+
+    public Logger(String name, Level threshold, #Encoder encoder, #Appender appender) {
+        this.name = name;
+        this.threshold = threshold;
+        this.encoder = encoder;
+        this.appender = appender;
+    }
+
+    /** Whether a record at `l` would be emitted (use to guard fielded builds). */
+    public boolean enabled(Level l) {
+        return Levels.severity(l) >= Levels.severity(this.threshold);
+    }
+
+    /** A fresh record stamped with now, this logger's name, level, and message. */
+    public #LogRecord event(Level l, String msg) {
+        return heap LogRecord(Clock.millisTime(), l, this.name, msg);
+    }
+
+    /** Encode + append the record if at/above threshold; consumes the record. */
+    public void emit(#LogRecord r) {
+        if (Levels.severity(r.level) >= Levels.severity(this.threshold)) {
+            int8[] bytes = this.encoder.encode(r);
+            this.appender.append(#bytes);
+        }
+    }
+
+    public void trace(String msg) {
+        this.logMsg(Level.TRACE, msg);
+    }
+
+    public void debug(String msg) {
+        this.logMsg(Level.DEBUG, msg);
+    }
+
+    public void info(String msg) {
+        this.logMsg(Level.INFO, msg);
+    }
+
+    public void warn(String msg) {
+        this.logMsg(Level.WARN, msg);
+    }
+
+    public void error(String msg) {
+        this.logMsg(Level.ERROR, msg);
+    }
+
+    void logMsg(Level l, String msg) {
+        if (Levels.severity(l) >= Levels.severity(this.threshold)) {
+            this.emit(#this.event(l, msg));
+        }
+    }
+}

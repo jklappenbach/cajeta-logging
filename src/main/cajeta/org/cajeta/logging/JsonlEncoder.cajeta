@@ -1,0 +1,42 @@
+package org.cajeta.logging;
+
+import cajeta.codec.json.JsonWriter;
+
+/**
+ * Default encoder: one compact JSON object per record (JSON Lines). Reserved
+ * keys (`ts`, `level`, `logger`, `msg`) are written first, then the structured
+ * fields in insertion order. No trailing newline — the appender adds it.
+ */
+public final class JsonlEncoder implements Encoder {
+
+    public JsonlEncoder() {
+    }
+
+    public #int8[] encode(LogRecord r) {
+        JsonWriter w = heap JsonWriter();
+        w.beginObject()
+         .key("ts").writeNumber(r.ts)
+         .key("level").writeString(Levels.name(r.level))
+         .key("logger").writeString(r.logger)
+         .key("msg").writeString(r.msg);
+
+        int32 i = 0;
+        int32 n = r.fields.count();
+        while (i < n) {
+            LogField f = r.fields.get(i);
+            if (f.kind == 0) {
+                w.key(f.key).writeString(f.sval);
+            } else if (f.kind == 1) {
+                w.key(f.key).writeNumber(f.ival);
+            } else if (f.kind == 2) {
+                w.key(f.key).writeBoolean(f.bval);
+            } else {
+                w.key(f.key).writeNumber(f.fval);
+            }
+            i = i + 1;
+        }
+
+        w.endObject();
+        return w.toBytes();
+    }
+}

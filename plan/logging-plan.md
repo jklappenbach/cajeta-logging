@@ -24,12 +24,19 @@ Do Tier 1 end to end first. Wire Tier 2 in once FiberLocal is built — no Tier-
 - [x] Spec (`docs/logging-spec.md`, now v0.2 with formats + FiberLocal integration).
 
 ### Phase 1 — core structured logger  *(Tier 1, the basics)*
-- [ ] `Level` enum + per-logger threshold table; zero-work no-op builder below threshold.
-- [ ] `LogRecord { ts, level, logger, msg, fields }`.
-- [ ] `Logger` facade: `of(Class)`, level methods, fluent `.str/.int64/.bool/.float64/.lazy`,
-      `.emit()`, `.with(fields)` child loggers.
-- [ ] `Clock`-sourced ISO-8601 timestamps.
-- [ ] Unit tests via cajeta-unit + `CapturingAppender`.
+- [x] `Level` enum + `Levels` severity/threshold helpers; below-threshold convenience
+      calls build nothing (zero-alloc no-op builder is a later perf pass).
+- [x] `LogRecord { ts, level, logger, msg, fields }` (fluent `str`/`i64`/`flag`/`f64`).
+- [x] `Logger` facade: level methods + fluent `event`/`emit`; `of(Class)` / `.with(...)`
+      child loggers deferred to Phase 3 (DI).
+- [x] `Clock`-sourced timestamps (epoch millis today; ISO-8601 rendering deferred).
+- [x] Unit tests via cajeta-unit + `CapturingAppender` — `src/test/cajeta`, driven by
+      `org.cajeta.unit.Runner` reflective `@Test` discovery. Run with `./run-tests.sh`.
+      The test exe compiles only the test sources and links the logging lib **and**
+      cajeta-unit in as `.cja` classpath deps — enabled by the cajeta-two
+      classpath-bitcode-linking fix (a plain `.cja` previously contributed declarations
+      only, not linked code). A native `cajeta test` task awaits build-tool wiring
+      (per-action source-root + dev-dependency-on-test-classpath resolution).
 
 ### Phase 2 — output formats  *(Tier 1)*
 - [ ] `Encoder` interface (`int8[] encode(LogRecord)`).

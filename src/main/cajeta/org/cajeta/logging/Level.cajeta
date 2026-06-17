@@ -1,0 +1,16 @@
+package org.cajeta.logging;
+
+/**
+ * Severity levels, least to most severe, with `OFF` as the disable sentinel.
+ * Ordering is by the severity rank in `Levels.severity` (cajeta enums compare
+ * with `==`, not `<`); a record is emitted when its level's rank is >= the
+ * logger's threshold rank.
+ */
+public enum Level {
+    TRACE,
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR,
+    OFF
+}

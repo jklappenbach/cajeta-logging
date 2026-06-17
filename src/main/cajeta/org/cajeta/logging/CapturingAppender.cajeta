@@ -1,0 +1,30 @@
+package org.cajeta.logging;
+
+import cajeta.collection.ArrayList;
+import cajeta.lang.String;
+
+/**
+ * Test sink: keeps each encoded line as a String for assertions. The
+ * `@TestComponent` capturing appender from the spec, in its explicit form.
+ */
+public final class CapturingAppender implements Appender {
+    public ArrayList<String> lines;
+
+    public CapturingAppender() {
+        this.lines = heap ArrayList<String>();
+    }
+
+    public void append(#int8[] line) {
+        int32 n = (int32) line.count();
+        String s = heap String(#line, n);
+        this.lines.add(#s);
+    }
+
+    public int32 count() {
+        return this.lines.count();
+    }
+
+    public String get(int32 i) {
+        return this.lines.get(i);
+    }
+}

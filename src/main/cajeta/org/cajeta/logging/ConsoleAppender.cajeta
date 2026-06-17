@@ -1,0 +1,19 @@
+package org.cajeta.logging;
+
+import cajeta.lang.String;
+
+/**
+ * Writes each encoded line to stdout via `println` (which supplies the newline).
+ * A TTY-gated colorized variant is a Phase-3 concern; this is the plain sink.
+ */
+public final class ConsoleAppender implements Appender {
+
+    public ConsoleAppender() {
+    }
+
+    public void append(#int8[] line) {
+        int32 n = (int32) line.count();
+        String s = heap String(#line, n);
+        System.stdout.println(s);
+    }
+}
