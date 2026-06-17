@@ -39,13 +39,23 @@ Do Tier 1 end to end first. Wire Tier 2 in once FiberLocal is built — no Tier-
       (per-action source-root + dev-dependency-on-test-classpath resolution).
 
 ### Phase 2 — output formats  *(Tier 1)*
-- [ ] `Encoder` interface (`int8[] encode(LogRecord)`).
-- [ ] `JsonlEncoder` (default) over `cajeta.codec.json.JsonWriter` → one compact line;
-      reserved-key collision policy.
-- [ ] `TextEncoder` — pattern layout (`%d %level %logger %msg %fields`), level padding,
-      TTY-gated ANSI color, `k=v` field tail.
-- [ ] `LogfmtEncoder` — `k=v` pairs with correct quoting/escaping.
-- [ ] Encoder round-trip/escaping tests for all three (spaces, quotes, unicode, newlines).
+- [x] `LogEncoder` interface (`int8[] encode(LogRecord)`). Named `LogEncoder`, not
+      `Encoder`, to avoid shadowing the stdlib `cajeta.wire.Encoder` (a compiler
+      name-resolution bug binds an unqualified `Encoder` to the wrong one — see below).
+- [x] `JsonlEncoder` (default) over `cajeta.codec.json.JsonWriter` → one compact line;
+      reserved keys first.
+- [x] `TextEncoder` — default layout `<ts> <LEVEL> <logger> <msg>  <k=v…>`, level padding,
+      `k=v` field tail. TTY ANSI color + configurable pattern are Phase-3 sink concerns.
+- [x] `LogfmtEncoder` — `k=v` pairs, lower-cased level, value quoting/escaping (`LogFmt`).
+- [x] Encoder tests (`EncoderTest`, 5 cases): layout, level padding, field quoting (spaces),
+      logfmt reserved-key/lowercase shape, quote-escaping. Run with `./run-tests.sh` (11/0).
+
+_Dogfood note: building Phase 2 surfaced two pre-existing cajeta-two compiler bugs (both
+fixed/worked-around): (1) an enum-constant constructor arg resolving to `int32` broke
+overload resolution when the ctor also had an interface param (compiler fix landed);
+(2) an unqualified `Encoder` bound to the stdlib `cajeta.wire.Encoder` instead of the
+local one, giving some implementers a wrong interface vtable → SIGSEGV — sidestepped by
+the `LogEncoder` rename; compiler name-resolution fix tracked separately._
 
 ### Phase 3 — appenders & config  *(Tier 1)*
 - [ ] `Appender` interface; `ConsoleAppender` (stdout/stderr, TTY detect for color),

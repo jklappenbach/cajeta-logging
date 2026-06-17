@@ -1,0 +1,13 @@
+package org.cajeta.logging;
+
+/**
+ * Renders a `LogRecord` to one line's worth of bytes (no trailing newline — the
+ * appender owns line termination). Named `LogEncoder`, not `Encoder`, to avoid
+ * shadowing the stdlib `cajeta.wire.Encoder`: an unqualified `Encoder` binds
+ * non-deterministically to whichever short name was registered first, silently
+ * giving some implementers the wrong interface vtable (compiler name-resolution
+ * bug tracked separately; the distinct name sidesteps it).
+ */
+public interface LogEncoder {
+    public #int8[] encode(LogRecord r);
+}

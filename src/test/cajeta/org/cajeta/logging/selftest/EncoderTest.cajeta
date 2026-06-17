@@ -1,0 +1,94 @@
+package org.cajeta.logging.selftest;
+
+import org.cajeta.unit.Assert;
+import org.cajeta.logging.Logger;
+import org.cajeta.logging.Level;
+import org.cajeta.logging.LogRecord;
+import org.cajeta.logging.CapturingAppender;
+import org.cajeta.logging.TextEncoder;
+import org.cajeta.logging.LogfmtEncoder;
+
+/**
+ * Phase 2 output-format tests: TextEncoder + LogfmtEncoder over a
+ * CapturingAppender. Each builds one record and asserts the rendered line's
+ * shape, level rendering, field tail, and value quoting/escaping.
+ */
+public class EncoderTest {
+
+    public EncoderTest() {
+        return;
+    }
+
+    // ---- TextEncoder -----------------------------------------------------
+
+    @Test
+    public void textRendersLevelLoggerMsgAndFields() {
+        CapturingAppender sink = heap CapturingAppender();
+        Logger log = heap Logger("order", Level.INFO, heap TextEncoder(), #sink);
+        LogRecord r = log.event(Level.INFO, "order placed");
+        r.str("id", "o_42").i64("amount", 1999);
+        log.emit(#r);
+
+        String line = sink.get(0);
+        Assert.that(line).contains("INFO ");          // padded to width 5
+        Assert.that(line).contains("order placed");    // msg emitted raw
+        Assert.that(line).contains("id=o_42");
+        Assert.that(line).contains("amount=1999");
+        return;
+    }
+
+    @Test
+    public void textQuotesFieldValuesWithSpaces() {
+        CapturingAppender sink = heap CapturingAppender();
+        Logger log = heap Logger("svc", Level.INFO, heap TextEncoder(), #sink);
+        LogRecord r = log.event(Level.WARN, "slow");
+        r.str("note", "needs review");
+        log.emit(#r);
+
+        Assert.that(sink.get(0)).contains("note=\"needs review\"");
+        return;
+    }
+
+    @Test
+    public void textPadsShortLevels() {
+        CapturingAppender sink = heap CapturingAppender();
+        Logger log = heap Logger("svc", Level.INFO, heap TextEncoder(), #sink);
+        log.warn("hi");
+        // WARN (4) pads to "WARN " then a single separator space → "WARN  ".
+        Assert.that(sink.get(0)).contains("WARN  ");
+        return;
+    }
+
+    // ---- LogfmtEncoder ---------------------------------------------------
+
+    @Test
+    public void logfmtRendersReservedKeysThenFields() {
+        CapturingAppender sink = heap CapturingAppender();
+        Logger log = heap Logger("order", Level.WARN, heap LogfmtEncoder(), #sink);
+        LogRecord r = log.event(Level.WARN, "order placed");
+        r.str("id", "o_42").flag("ok", true);
+        log.emit(#r);
+
+        String line = sink.get(0);
+        Assert.that(line).startsWith("ts=");
+        Assert.that(line).contains("level=warn");           // lower-cased
+        Assert.that(line).contains("logger=order");
+        Assert.that(line).contains("msg=\"order placed\"");  // quoted (space)
+        Assert.that(line).contains("id=o_42");
+        Assert.that(line).contains("ok=true");
+        return;
+    }
+
+    @Test
+    public void logfmtEscapesQuotesInValues() {
+        CapturingAppender sink = heap CapturingAppender();
+        Logger log = heap Logger("svc", Level.INFO, heap LogfmtEncoder(), #sink);
+        LogRecord r = log.event(Level.INFO, "m");
+        r.str("path", "a\"b");
+        log.emit(#r);
+
+        // value a"b → quoted + escaped: path="a\"b"
+        Assert.that(sink.get(0)).contains("path=\"a\\\"b\"");
+        return;
+    }
+}

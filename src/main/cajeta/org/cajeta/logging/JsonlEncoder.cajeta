@@ -7,7 +7,7 @@ import cajeta.codec.json.JsonWriter;
  * keys (`ts`, `level`, `logger`, `msg`) are written first, then the structured
  * fields in insertion order. No trailing newline — the appender adds it.
  */
-public final class JsonlEncoder implements Encoder {
+public final class JsonlEncoder implements LogEncoder {
 
     public JsonlEncoder() {
     }
