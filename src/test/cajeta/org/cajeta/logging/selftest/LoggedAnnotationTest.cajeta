@@ -1,0 +1,69 @@
+package org.cajeta.logging.selftest;
+
+import org.cajeta.unit.Assert;
+import org.cajeta.logging.Level;
+
+/**
+ * A service carrying `@Logged` (Cajeta's @Slf4j). The compiler injects
+ * `static Logger log = Log.defaultFor("<this class>")` — the `log` handle used
+ * in the methods below is never declared. The accessors expose the synthesized
+ * logger's state so the test can assert on it. Statically constructed by the
+ * test (so its static initializer is retained), exercising @Logged the way a
+ * real consumer uses it.
+ */
+@Logged
+class LoggedService {
+    public LoggedService() {
+        return;
+    }
+
+    /** Name of the synthesized logger — defaults to this class's canonical. */
+    public String loggerName() {
+        return log.name;
+    }
+
+    /** Whether the synthesized logger emits at `l` (default threshold INFO). */
+    public boolean emitsAt(Level l) {
+        return log.enabled(l);
+    }
+
+    /** Exercise the convenience call path; below-threshold, emits nothing. */
+    public void warmUp() {
+        log.debug("not emitted, but must not crash");
+    }
+}
+
+/**
+ * `@Logged` synthesis test. Verifies the injected `log` field exists (its
+ * static initializer ran → non-null), is named for the annotated class, and
+ * carries the default INFO threshold. The emit/format path is covered by
+ * LoggingTest / AppenderTest; this covers the annotation wiring.
+ */
+public class LoggedAnnotationTest {
+
+    public LoggedAnnotationTest() {
+        return;
+    }
+
+    @Test
+    public void logFieldIsNamedForAnnotatedClass() {
+        LoggedService svc = heap LoggedService();
+        Assert.that(svc.loggerName()).isEqualTo(
+            "org.cajeta.logging.selftest.LoggedService");
+    }
+
+    @Test
+    public void logFieldGatesAtInfoByDefault() {
+        LoggedService svc = heap LoggedService();
+        Assert.isTrue(svc.emitsAt(Level.INFO));
+        Assert.isTrue(svc.emitsAt(Level.WARN));
+        Assert.isFalse(svc.emitsAt(Level.DEBUG));
+    }
+
+    @Test
+    public void convenienceCallsDoNotCrash() {
+        LoggedService svc = heap LoggedService();
+        svc.warmUp();
+        Assert.isTrue(true);
+    }
+}

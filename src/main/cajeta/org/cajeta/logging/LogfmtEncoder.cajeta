@@ -1,0 +1,33 @@
+package org.cajeta.logging;
+
+import cajeta.lang.Int64;
+
+/**
+ * Flat `key=value` pairs (Heroku/Go `logfmt`) — greppable like text, parseable
+ * like JSON. Reserved keys (`ts`, `level`, `logger`, `msg`) lead, then the
+ * structured fields in insertion order. The level is lower-cased (logfmt
+ * convention); string values are quoted/escaped only when needed. Timestamp is
+ * epoch millis for now (ISO-8601 rendering is a later pass).
+ */
+public final class LogfmtEncoder implements LogEncoder {
+
+    public LogfmtEncoder() {
+    }
+
+    public #int8[] encode(LogRecord r) {
+        String line = "ts=" + Int64.of(r.ts).toString()
+            + " level=" + Levels.name(r.level).toLowerCase()
+            + " logger=" + LogFmt.quote(r.logger)
+            + " msg=" + LogFmt.quote(r.msg);
+
+        int32 n = r.fields.count();
+        int32 i = 0;
+        while (i < n) {
+            LogField f = r.fields.get(i);
+            line = line + " " + f.key + "=" + LogFmt.fieldValue(f);
+            i = i + 1;
+        }
+
+        return LogFmt.bytesOf(line);
+    }
+}

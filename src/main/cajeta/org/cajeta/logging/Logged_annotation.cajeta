@@ -1,0 +1,27 @@
+package org.cajeta.logging;
+
+/**
+ * Marks a class for an auto-synthesized logger — Cajeta's `@Slf4j`. The compiler
+ * injects a `static Logger log = Log.defaultFor("pkg.Class")` member into any
+ * class carrying `@Logged`, so a `log` handle is available with no boilerplate:
+ *
+ * ```cajeta
+ * @Logged
+ * public class CheckoutService {
+ *     public void pay() {
+ *         log.info("charged");            // `log` is synthesized — never declared
+ *     }
+ * }
+ * ```
+ *
+ * The synthesized field is `static` (one logger per class, usable from static
+ * methods, no per-instance cost), named for the annotated class, and configured
+ * by `Log.defaultFor` (compact JSONL to stdout at INFO by default). Named
+ * `@Logged` rather than `@Logger` so it stays distinct from the `Logger` facade
+ * class it produces — the annotation marks a class as logging-enabled.
+ *
+ * NOTE: `@Logged` is wired in the cajeta-two compiler (annotation-driven field
+ * synthesis); a toolchain without that support compiles the annotation as a
+ * no-op (no `log` field), so use a compiler that ships the synthesis pass.
+ */
+public annotation Logged { }

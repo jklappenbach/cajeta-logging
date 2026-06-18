@@ -1,0 +1,53 @@
+package org.cajeta.logging;
+
+import cajeta.lang.Int64;
+import cajeta.lang.Float64;
+import cajeta.lang.Boolean;
+
+/**
+ * Shared rendering helpers for the flat `k=v` encoders (`TextEncoder`,
+ * `LogfmtEncoder`). String values are quoted/escaped only when they need it
+ * (logfmt rules: empty, or containing a space, `"`, or `=`); numbers and
+ * booleans render bare. `bytesOf` hands back an exactly-sized owned `int8[]`
+ * for the `Encoder` contract (the appender owns the line bytes).
+ */
+final class LogFmt {
+
+    /** Owned, exactly-`byteLength` copy of `s`'s bytes (no capacity slack). */
+    static #int8[] bytesOf(String s) {
+        int32 n = s.byteLength;
+        int8[] out = heap int8[n];
+        int32 i = 0;
+        while (i < n) {
+            out[i] = s.byteAt(i);
+            i = i + 1;
+        }
+        return out;
+    }
+
+    /** Whether `v` must be double-quoted to stay an unambiguous `k=v` token. */
+    static boolean needsQuote(String v) {
+        return v.isEmpty() || v.contains(" ") || v.contains("\"") || v.contains("=");
+    }
+
+    /** `v` as a token: quoted + `\`/`"`-escaped when needed, else a bare copy. */
+    static String quote(String v) {
+        if (LogFmt.needsQuote(v)) {
+            String esc = v.replace("\\", "\\\\").replace("\"", "\\\"");
+            return "\"" + esc + "\"";
+        }
+        return "" + v;
+    }
+
+    /** A field's value rendered for `k=v`: strings quoted, scalars bare. */
+    static String fieldValue(LogField f) {
+        if (f.kind == 0) {
+            return LogFmt.quote(f.sval);
+        } else if (f.kind == 1) {
+            return Int64.of(f.ival).toString();
+        } else if (f.kind == 2) {
+            return Boolean.of(f.bval).toString();
+        }
+        return Float64.of(f.fval).toString();
+    }
+}

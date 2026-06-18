@@ -21,10 +21,10 @@ import cajeta.time.Clock;
 public final class Logger {
     public String name;
     public Level threshold;
-    Encoder encoder;
+    LogEncoder encoder;
     Appender appender;
 
-    public Logger(String name, Level threshold, #Encoder encoder, #Appender appender) {
+    public Logger(String name, Level threshold, #LogEncoder encoder, #Appender appender) {
         this.name = name;
         this.threshold = threshold;
         this.encoder = encoder;

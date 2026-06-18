@@ -1,0 +1,47 @@
+package org.cajeta.logging;
+
+import cajeta.lang.Int64;
+
+/**
+ * Human-readable console line: `<ts> <LEVEL> <logger> <msg>  <k=v …>`. The
+ * level is padded to a fixed width for column alignment; structured fields
+ * trail as `k=v` (quoted only when needed) so nothing is lost relative to
+ * JSONL. Timestamp is epoch millis for now (ISO-8601 rendering is a later
+ * pass); message text is emitted raw. TTY-gated ANSI color and a configurable
+ * layout pattern are Phase-3 sink concerns, not the encoder's.
+ */
+public final class TextEncoder implements LogEncoder {
+
+    public TextEncoder() {
+    }
+
+    public #int8[] encode(LogRecord r) {
+        String line = Int64.of(r.ts).toString()
+            + " " + TextEncoder.padLevel(Levels.name(r.level))
+            + " " + r.logger
+            + " " + r.msg;
+
+        int32 n = r.fields.count();
+        if (n > 0) {
+            // A second space sets the field tail off from the message.
+            line = line + " ";
+            int32 i = 0;
+            while (i < n) {
+                LogField f = r.fields.get(i);
+                line = line + " " + f.key + "=" + LogFmt.fieldValue(f);
+                i = i + 1;
+            }
+        }
+
+        return LogFmt.bytesOf(line);
+    }
+
+    /** Right-pad a level name to width 5 (the longest: TRACE/DEBUG/ERROR). */
+    static String padLevel(String name) {
+        String s = "" + name;
+        while (s.byteLength < 5) {
+            s = s + " ";
+        }
+        return s;
+    }
+}
