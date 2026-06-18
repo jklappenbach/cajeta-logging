@@ -66,9 +66,14 @@ the `LogEncoder` rename; compiler name-resolution fix tracked separately._
       Named `@Logged` (not `@Logger`) to stay distinct from the `Logger` facade class it
       produces. The annotation lives here (`Logged_annotation.cajeta`); the synthesis pass +
       annotation/short-name name-resolution fixes (#65) and a static-field field-read
-      load-through fix landed in cajeta-two. Known gap: a `@Logged` class reached ONLY via
-      reflection (e.g. a `@Test` class) has its `log` initializer stripped by lean DCE →
-      null; use it on statically-referenced classes for now (cajeta-two task #68).
+      load-through fix landed in cajeta-two. `@Logged` on a reflectively-discovered class
+      (e.g. a `@Test` class found via `Class.allClasses()`) is supported and tested
+      (`LoggedReflectionDiscoveryTest`, 18/0) — the synthesized `log` clinit is an
+      `llvm.global_ctors` root that runs at startup regardless of how the class is reached;
+      lean DCE gates only the reflective *registration* ctor, never the clinit. (cajeta-two
+      task #68 was first read as "DCE strips the clinit"; verified by two CLI lean-mode
+      repros that it does not — the early crash was the name-resolution + static-field
+      codegen bugs, since fixed. Task #68 CLOSED.)
       Configurable `@Logged(level=..., name=...)` + a process-wide default override are
       follow-ups.
 - [~] `Appender` interface ✅; `ConsoleAppender` ✅ (TTY color deferred); `FileAppender` ✅

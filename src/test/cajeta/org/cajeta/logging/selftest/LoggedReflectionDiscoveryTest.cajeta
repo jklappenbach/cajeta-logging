@@ -1,0 +1,32 @@
+package org.cajeta.logging.selftest;
+
+import org.cajeta.unit.Assert;
+
+/**
+ * Regression for the original task-#68 concern: `@Logged` applied directly to a
+ * class that is itself discovered *and invoked* reflectively (the cajeta-unit
+ * Runner finds every `@Test` class via `Class.allClasses()` and calls its test
+ * methods through the reflect invoke adapter). The synthesized
+ * `static Logger log = Log.defaultFor(...)` is initialized by a clinit
+ * registered in `llvm.global_ctors`, which runs at startup independent of how
+ * the class is reached — so `log` is live here, in a class with no static
+ * construction site of its own.
+ *
+ * (#68 was first read as "lean DCE strips the reflection-only class's clinit".
+ * It does not: lean DCE gates only the reflective *registration* ctor, never
+ * the clinit. The early crash was the annotation name-resolution + static-field
+ * load-through codegen bugs, since fixed; this test pins the corrected behavior.)
+ */
+@Logged
+public class LoggedReflectionDiscoveryTest {
+
+    public LoggedReflectionDiscoveryTest() {
+        return;
+    }
+
+    @Test
+    public void logIsInitializedOnReflectivelyDiscoveredClass() {
+        Assert.that(log.name).isEqualTo(
+            "org.cajeta.logging.selftest.LoggedReflectionDiscoveryTest");
+    }
+}
