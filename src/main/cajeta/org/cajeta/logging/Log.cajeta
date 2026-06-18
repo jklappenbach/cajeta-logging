@@ -13,6 +13,17 @@ public final class Log {
         return heap Logger(name, threshold, heap JsonlEncoder(), heap ConsoleAppender());
     }
 
+    /**
+     * The default logger for a `@Logger`-annotated class. The compiler
+     * synthesizes `static Logger log = Log.defaultFor("pkg.Class")` into any
+     * class carrying `@Logger`, so this is the out-of-the-box configuration:
+     * compact JSONL to stdout at INFO. A process-wide override hook is a
+     * follow-up (see plan/logging-plan.md).
+     */
+    public static #Logger defaultFor(String name) {
+        return Log.console(name, Level.INFO);
+    }
+
     /** A logger that captures encoded lines in-memory (for tests). */
     public static #Logger capturing(String name, Level threshold, #CapturingAppender sink) {
         return heap Logger(name, threshold, heap JsonlEncoder(), sink);

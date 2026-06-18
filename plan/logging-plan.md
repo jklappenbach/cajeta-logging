@@ -58,6 +58,19 @@ local one, giving some implementers a wrong interface vtable → SIGSEGV — sid
 the `LogEncoder` rename; compiler name-resolution fix tracked separately._
 
 ### Phase 3 — appenders & config  *(Tier 1)*
+- [x] **`@Logged` annotation (Cajeta's `@Slf4j`)** ✅ — annotate a class, get a ready-to-use
+      `log` with zero boilerplate. The cajeta-two compiler synthesizes
+      `static Logger log = Log.defaultFor("<pkg.Class>")` into any `@Logged` class (one
+      logger per class, named for it, default JSONL→console at INFO via `Log.defaultFor`).
+      Bare `log.info(...)` resolves with no field declared. `LoggedAnnotationTest` (3 cases).
+      Named `@Logged` (not `@Logger`) to stay distinct from the `Logger` facade class it
+      produces. The annotation lives here (`Logged_annotation.cajeta`); the synthesis pass +
+      annotation/short-name name-resolution fixes (#65) and a static-field field-read
+      load-through fix landed in cajeta-two. Known gap: a `@Logged` class reached ONLY via
+      reflection (e.g. a `@Test` class) has its `log` initializer stripped by lean DCE →
+      null; use it on statically-referenced classes for now (cajeta-two task #68).
+      Configurable `@Logged(level=..., name=...)` + a process-wide default override are
+      follow-ups.
 - [~] `Appender` interface ✅; `ConsoleAppender` ✅ (TTY color deferred); `FileAppender` ✅
       (`cajeta.io.file`, `OpenMode.APPEND`/`WRITE`, flush-per-line); `CompositeAppender` ✅
       (fan-out to N sinks, copies the owned line per child). `AppenderTest` 3 cases.
