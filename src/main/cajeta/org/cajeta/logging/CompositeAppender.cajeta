@@ -1,0 +1,46 @@
+package org.cajeta.logging;
+
+import cajeta.collection.ArrayList;
+
+/**
+ * Fans one encoded line out to several appenders — the common "log to console
+ * AND a file" shape. Because `Appender.append` takes OWNERSHIP of the line
+ * bytes (`#int8[]`), the composite hands each child its own copy.
+ *
+ * ```cajeta
+ * CompositeAppender out = heap CompositeAppender();
+ * out.add(#heap ConsoleAppender()).add(#heap FileAppender(path, OpenMode.APPEND));
+ * Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), #out);
+ * ```
+ */
+public final class CompositeAppender implements Appender {
+    ArrayList<Appender> appenders;
+
+    public CompositeAppender() {
+        this.appenders = heap ArrayList<Appender>();
+    }
+
+    /** Add a child sink; returns this for chaining. Takes ownership of `a`. */
+    public CompositeAppender add(#Appender a) {
+        this.appenders.add(#a);
+        return this;
+    }
+
+    public void append(#int8[] line) {
+        int32 len = (int32) line.count();
+        int32 n = this.appenders.count();
+        int32 i = 0;
+        while (i < n) {
+            Appender a = this.appenders.get(i);
+            int8[] copy = heap int8[len];
+            int32 j = 0;
+            while (j < len) {
+                copy[j] = line[j];
+                j = j + 1;
+            }
+            a.append(#copy);
+            i = i + 1;
+        }
+        // `line` (owned) drops here.
+    }
+}

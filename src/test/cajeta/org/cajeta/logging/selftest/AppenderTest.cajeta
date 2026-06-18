@@ -55,4 +55,25 @@ public class AppenderTest {
         Assert.isFalse(content.contains("should not appear"));
         return;
     }
+
+    @Test
+    public void compositeAppenderFansOutToEverySink() {
+        String pathA = "/tmp/cajeta_logging_composite_a.jsonl";
+        String pathB = "/tmp/cajeta_logging_composite_b.jsonl";
+        // FileAppender flushes per line, so the bytes are on disk after emit —
+        // no close() needed (the composite owns the children, can't close them).
+        CompositeAppender out = heap CompositeAppender();
+        out.add(#heap FileAppender(pathA, OpenMode.WRITE));
+        out.add(#heap FileAppender(pathB, OpenMode.WRITE));
+        Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), #out);
+        log.info("teed");
+
+        int8[] ba = File.readAllBytes(pathA);
+        String a = heap String(#ba, (int32) ba.count());
+        int8[] bb = File.readAllBytes(pathB);
+        String b = heap String(#bb, (int32) bb.count());
+        Assert.that(a).contains("\"msg\":\"teed\"");
+        Assert.that(b).contains("\"msg\":\"teed\"");
+        return;
+    }
 }

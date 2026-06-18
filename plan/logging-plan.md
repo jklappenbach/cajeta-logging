@@ -59,8 +59,10 @@ the `LogEncoder` rename; compiler name-resolution fix tracked separately._
 
 ### Phase 3 — appenders & config  *(Tier 1)*
 - [~] `Appender` interface ✅; `ConsoleAppender` ✅ (TTY color deferred); `FileAppender` ✅
-      (`cajeta.io.file`, `OpenMode.APPEND`/`WRITE`, flush-per-line; `AppenderTest` 2 cases,
-      file round-trip + threshold gating). `RollingFileAppender` (size/time rolling) TODO.
+      (`cajeta.io.file`, `OpenMode.APPEND`/`WRITE`, flush-per-line); `CompositeAppender` ✅
+      (fan-out to N sinks, copies the owned line per child). `AppenderTest` 3 cases.
+      `RollingFileAppender` (size/time rolling) **BLOCKED** — `cajeta.io.file.File` has no
+      `rename`/`delete`/`exists` static op yet (needed to roll current→`.N`).
 - [ ] `AsyncAppender` over a worker fiber + `Channel<LogRecord>`; back-pressure policy
       (block / drop-oldest / drop-newest).
 - [ ] `LoggerFactory` as `@Component` (singleton); appenders/encoder as components;
