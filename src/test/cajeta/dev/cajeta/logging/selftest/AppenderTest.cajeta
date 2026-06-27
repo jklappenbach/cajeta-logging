@@ -1,10 +1,10 @@
-package org.cajeta.logging.selftest;
+package dev.cajeta.logging.selftest;
 
-import org.cajeta.unit.Assert;
-import org.cajeta.logging.Logger;
-import org.cajeta.logging.Level;
-import org.cajeta.logging.JsonlEncoder;
-import org.cajeta.logging.FileAppender;
+import dev.cajeta.unit.Assert;
+import dev.cajeta.logging.Logger;
+import dev.cajeta.logging.Level;
+import dev.cajeta.logging.JsonlEncoder;
+import dev.cajeta.logging.FileAppender;
 import cajeta.io.file.File;
 import cajeta.io.file.OpenMode;
 import cajeta.lang.String;

@@ -1,4 +1,4 @@
-package org.cajeta.logging;
+package dev.cajeta.logging;
 
 /**
  * Helpers over `Level`. cajeta enums are bare (no methods), so severity ranking

@@ -1,6 +1,6 @@
-package org.cajeta.logging.selftest;
+package dev.cajeta.logging.selftest;
 
-import org.cajeta.unit.Runner;
+import dev.cajeta.unit.Runner;
 
 /**
  * Test entry: reflective discovery runs every `@Test` across the binary.

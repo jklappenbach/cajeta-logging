@@ -1,4 +1,4 @@
-package org.cajeta.logging;
+package dev.cajeta.logging;
 
 /**
  * Marks a class for an auto-synthesized logger — Cajeta's `@Slf4j`. The compiler

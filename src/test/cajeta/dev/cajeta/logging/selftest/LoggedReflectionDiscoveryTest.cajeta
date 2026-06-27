@@ -1,6 +1,6 @@
-package org.cajeta.logging.selftest;
+package dev.cajeta.logging.selftest;
 
-import org.cajeta.unit.Assert;
+import dev.cajeta.unit.Assert;
 
 /**
  * Regression for the original task-#68 concern: `@Logged` applied directly to a
@@ -27,6 +27,6 @@ public class LoggedReflectionDiscoveryTest {
     @Test
     public void logIsInitializedOnReflectivelyDiscoveredClass() {
         Assert.that(log.name).isEqualTo(
-            "org.cajeta.logging.selftest.LoggedReflectionDiscoveryTest");
+            "dev.cajeta.logging.selftest.LoggedReflectionDiscoveryTest");
     }
 }

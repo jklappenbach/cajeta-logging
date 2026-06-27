@@ -20,7 +20,7 @@ Do Tier 1 end to end first. Wire Tier 2 in once FiberLocal is built — no Tier-
 ## Phasing
 
 ### Phase 0 — skeleton (done)
-- [x] `cajeta init library` scaffold; builds to `org.cajeta.logging-*.cja`.
+- [x] `cajeta init library` scaffold; builds to `dev.cajeta.logging-*.cja`.
 - [x] Spec (`docs/logging-spec.md`, now v0.2 with formats + FiberLocal integration).
 
 ### Phase 1 — core structured logger  *(Tier 1, the basics)*
@@ -31,7 +31,7 @@ Do Tier 1 end to end first. Wire Tier 2 in once FiberLocal is built — no Tier-
       child loggers deferred to Phase 3 (DI).
 - [x] `Clock`-sourced timestamps (epoch millis today; ISO-8601 rendering deferred).
 - [x] Unit tests via cajeta-unit + `CapturingAppender` — `src/test/cajeta`, driven by
-      `org.cajeta.unit.Runner` reflective `@Test` discovery. Run with `./run-tests.sh`.
+      `dev.cajeta.unit.Runner` reflective `@Test` discovery. Run with `./run-tests.sh`.
       The test exe compiles only the test sources and links the logging lib **and**
       cajeta-unit in as `.cja` classpath deps — enabled by the cajeta-two
       classpath-bitcode-linking fix (a plain `.cja` previously contributed declarations

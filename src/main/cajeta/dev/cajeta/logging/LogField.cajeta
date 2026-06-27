@@ -1,4 +1,4 @@
-package org.cajeta.logging;
+package dev.cajeta.logging;
 
 /**
  * One structured key/value pair on a `LogRecord`. A lightweight tagged value

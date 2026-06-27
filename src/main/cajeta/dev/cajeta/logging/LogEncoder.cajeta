@@ -1,4 +1,4 @@
-package org.cajeta.logging;
+package dev.cajeta.logging;
 
 /**
  * Renders a `LogRecord` to one line's worth of bytes (no trailing newline — the

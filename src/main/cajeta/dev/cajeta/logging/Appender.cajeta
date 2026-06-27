@@ -1,4 +1,4 @@
-package org.cajeta.logging;
+package dev.cajeta.logging;
 
 /**
  * Sink for an encoded line. Takes ownership of the bytes (`#int8[]`) and is

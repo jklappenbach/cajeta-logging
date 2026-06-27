@@ -1,7 +1,7 @@
-package org.cajeta.logging.selftest;
+package dev.cajeta.logging.selftest;
 
-import org.cajeta.unit.Assert;
-import org.cajeta.logging.Level;
+import dev.cajeta.unit.Assert;
+import dev.cajeta.logging.Level;
 
 /**
  * A service carrying `@Logged` (Cajeta's @Slf4j). The compiler injects
@@ -49,7 +49,7 @@ public class LoggedAnnotationTest {
     public void logFieldIsNamedForAnnotatedClass() {
         LoggedService svc = heap LoggedService();
         Assert.that(svc.loggerName()).isEqualTo(
-            "org.cajeta.logging.selftest.LoggedService");
+            "dev.cajeta.logging.selftest.LoggedService");
     }
 
     @Test

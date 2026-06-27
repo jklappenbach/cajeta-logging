@@ -1,12 +1,12 @@
-package org.cajeta.logging.selftest;
+package dev.cajeta.logging.selftest;
 
-import org.cajeta.unit.Assert;
-import org.cajeta.logging.Logger;
-import org.cajeta.logging.Level;
-import org.cajeta.logging.LogRecord;
-import org.cajeta.logging.CapturingAppender;
-import org.cajeta.logging.TextEncoder;
-import org.cajeta.logging.LogfmtEncoder;
+import dev.cajeta.unit.Assert;
+import dev.cajeta.logging.Logger;
+import dev.cajeta.logging.Level;
+import dev.cajeta.logging.LogRecord;
+import dev.cajeta.logging.CapturingAppender;
+import dev.cajeta.logging.TextEncoder;
+import dev.cajeta.logging.LogfmtEncoder;
 
 /**
  * Phase 2 output-format tests: TextEncoder + LogfmtEncoder over a

@@ -1,11 +1,11 @@
-package org.cajeta.logging.selftest;
+package dev.cajeta.logging.selftest;
 
-import org.cajeta.unit.Assert;
-import org.cajeta.logging.Log;
-import org.cajeta.logging.Logger;
-import org.cajeta.logging.Level;
-import org.cajeta.logging.LogRecord;
-import org.cajeta.logging.CapturingAppender;
+import dev.cajeta.unit.Assert;
+import dev.cajeta.logging.Log;
+import dev.cajeta.logging.Logger;
+import dev.cajeta.logging.Level;
+import dev.cajeta.logging.LogRecord;
+import dev.cajeta.logging.CapturingAppender;
 
 /**
  * Tier-1 Phase 1 tests for cajeta-logging, driven by cajeta-unit's reflective

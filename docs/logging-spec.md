@@ -73,7 +73,7 @@ on top. JSONL is the default encoding everywhere.
 ## 3. Architecture
 
 ```
-                      org.cajeta.logging
+                      dev.cajeta.logging
   ┌────────────────────────────────────────────────────────────┐
   │ Facade            Logger  (per-class; level methods + fields) │
   │ Event             LogRecord { ts, level, logger, msg, fields }│

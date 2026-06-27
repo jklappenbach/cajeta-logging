@@ -1,4 +1,4 @@
-package org.cajeta.logging;
+package dev.cajeta.logging;
 
 /**
  * Entry facade for cajeta-logging. Tier-1 factories that wire a `Logger` to an
@@ -30,7 +30,7 @@ public final class Log {
     }
 
     /**
-     * Smoke demo for `cajeta jit-run org.cajeta.logging.Log.demo`: emits two
+     * Smoke demo for `cajeta jit-run dev.cajeta.logging.Log.demo`: emits two
      * JSONL lines to stdout (an INFO with no fields, a WARN with three fields)
      * and verifies the DEBUG line is gated out.
      */
@@ -47,7 +47,7 @@ public final class Log {
     }
 
     /**
-     * Native entry shim (`--emit=exe org.cajeta.logging.Log.run`): runs the
+     * Native entry shim (`--emit=exe dev.cajeta.logging.Log.run`): runs the
      * demo, exits 0. A standalone smoke point while `jit-run` is blocked here by
      * the reflection-thunk env gap.
      */

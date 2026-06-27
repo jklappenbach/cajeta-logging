@@ -1,4 +1,4 @@
-package org.cajeta.logging;
+package dev.cajeta.logging;
 
 /**
  * Severity levels, least to most severe, with `OFF` as the disable sentinel.

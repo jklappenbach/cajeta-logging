@@ -1,4 +1,4 @@
-package org.cajeta.logging;
+package dev.cajeta.logging;
 
 import cajeta.io.file.File;
 import cajeta.io.file.FileWriter;
