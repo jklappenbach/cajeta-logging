@@ -33,7 +33,8 @@ final class LogFmt {
     /** `v` as a token: quoted + `\`/`"`-escaped when needed, else a bare copy. */
     static String quote(String v) {
         if (LogFmt.needsQuote(v)) {
-            String esc = v.replace("\\", "\\\\").replace("\"", "\\\"");
+            String slashes = v.replace("\\", "\\\\");
+            String esc = slashes.replace("\"", "\\\"");
             return "\"" + esc + "\"";
         }
         return "" + v;
