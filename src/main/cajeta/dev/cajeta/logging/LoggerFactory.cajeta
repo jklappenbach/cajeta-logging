@@ -1,0 +1,27 @@
+package dev.cajeta.logging;
+
+/**
+ * DI entry point for logging. A process singleton holding the profile-selected
+ * `LogEncoder` and `Appender` (both DI singletons); `loggerFor` hands out
+ * per-name loggers that BORROW them, so one encoder + one appender back every
+ * logger in the process. Under `--profile=test` the injected `Appender` is the
+ * masking `CapturingAppender`; under `prod` it is a file sink, under `dev` the
+ * console.
+ *
+ * `Log.defaultFor` (and thus every `@Logged` class) routes here, so logging is
+ * DI-wired and test-overridable with no per-logger sink construction.
+ */
+@Component
+public final class LoggerFactory {
+    @Inject LogEncoder encoder;
+    @Inject Appender appender;
+
+    public LoggerFactory() {
+        return;
+    }
+
+    /** A logger named `name`, gated at `threshold`, sharing the DI sinks. */
+    public #Logger loggerFor(String name, Level threshold) {
+        return heap Logger(name, threshold, this.encoder, this.appender);
+    }
+}

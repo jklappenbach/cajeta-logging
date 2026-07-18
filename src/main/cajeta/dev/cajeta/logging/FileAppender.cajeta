@@ -17,11 +17,19 @@ import cajeta.lang.String;
  * Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), #out);
  * ```
  */
+@Component @Profile("prod")
 public final class FileAppender implements Appender {
     FileWriter writer;
 
     public FileAppender(String path, OpenMode mode) {
         this.writer = File.openWrite(path, mode);
+    }
+
+    // No-arg ctor for DI: the `Appender` under `--profile=prod`, appending
+    // JSONL to a default `app.jsonl`. A configurable path / rolling policy is a
+    // follow-up (see plan/logging-plan.md).
+    public FileAppender() {
+        this.writer = File.openWrite("app.jsonl", OpenMode.APPEND);
     }
 
     public void append(#int8[] line) {

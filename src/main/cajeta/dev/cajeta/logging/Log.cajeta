@@ -14,14 +14,15 @@ public final class Log {
     }
 
     /**
-     * The default logger for a `@Logger`-annotated class. The compiler
+     * The default logger for a `@Logged`-annotated class. The compiler
      * synthesizes `static Logger log = Log.defaultFor("pkg.Class")` into any
-     * class carrying `@Logger`, so this is the out-of-the-box configuration:
-     * compact JSONL to stdout at INFO. A process-wide override hook is a
-     * follow-up (see plan/logging-plan.md).
+     * such class, so this is the out-of-the-box configuration — now DI-wired:
+     * it routes through the singleton `LoggerFactory`, so the encoder + appender
+     * are the profile-selected ones (prod→JSONL/file, dev→text/console,
+     * test→capturing) and the logger borrows those shared sinks.
      */
     public static #Logger defaultFor(String name) {
-        return Log.console(name, Level.INFO);
+        return LoggerFactory.__cajeta_inject().loggerFor(name, Level.INFO);
     }
 
     /** A logger that captures encoded lines in-memory (for tests). */

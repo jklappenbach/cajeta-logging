@@ -1,0 +1,44 @@
+package dev.cajeta.logging.selftest;
+
+import dev.cajeta.unit.Assert;
+import dev.cajeta.logging.LoggerFactory;
+import dev.cajeta.logging.CapturingAppender;
+import dev.cajeta.logging.Logger;
+import dev.cajeta.logging.Level;
+
+/**
+ * DI-wired logging (Phase 3). Under `--profile=test` the `LoggerFactory`
+ * injects the masking `CapturingAppender` and `JsonlEncoder`; a factory-produced
+ * logger borrows them, and the captured line is asserted through the same
+ * singleton. Counts are read as deltas because the appender is a process
+ * singleton shared across tests.
+ */
+public class DiLoggingTest {
+
+    public DiLoggingTest() {
+        return;
+    }
+
+    @Test
+    public void factoryLoggerCapturesViaTestComponent() {
+        CapturingAppender cap = CapturingAppender.__cajeta_inject();
+        int32 before = cap.count();
+        Logger log = LoggerFactory.__cajeta_inject().loggerFor("svc", Level.INFO);
+        log.info("di wired hello");
+        Assert.that(cap.count()).isEqualTo(before + 1);
+        Assert.that(cap.get(cap.count() - 1)).contains("\"msg\":\"di wired hello\"");
+        return;
+    }
+
+    @Test
+    public void factoryLoggerRespectsThreshold() {
+        CapturingAppender cap = CapturingAppender.__cajeta_inject();
+        int32 before = cap.count();
+        Logger log = LoggerFactory.__cajeta_inject().loggerFor("svc", Level.WARN);
+        log.info("below threshold");
+        Assert.that(cap.count()).isEqualTo(before);
+        log.warn("at threshold");
+        Assert.that(cap.count()).isEqualTo(before + 1);
+        return;
+    }
+}
