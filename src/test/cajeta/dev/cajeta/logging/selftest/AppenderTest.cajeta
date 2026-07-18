@@ -24,7 +24,7 @@ public class AppenderTest {
     public void fileAppenderWritesOneJsonlLinePerRecord() {
         String path = "/tmp/cajeta_logging_fileappender_test.jsonl";
         FileAppender out = heap FileAppender(path, OpenMode.WRITE);
-        Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), #out);
+        Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), out);
         log.info("first");
         log.info("second");
         out.close();
@@ -43,7 +43,7 @@ public class AppenderTest {
     public void fileAppenderGatesBelowThreshold() {
         String path = "/tmp/cajeta_logging_fileappender_gate.jsonl";
         FileAppender out = heap FileAppender(path, OpenMode.WRITE);
-        Logger log = heap Logger("svc", Level.WARN, heap JsonlEncoder(), #out);
+        Logger log = heap Logger("svc", Level.WARN, heap JsonlEncoder(), out);
         log.info("should not appear");
         log.warn("kept");
         out.close();
@@ -65,7 +65,7 @@ public class AppenderTest {
         CompositeAppender out = heap CompositeAppender();
         out.add(#heap FileAppender(pathA, OpenMode.WRITE));
         out.add(#heap FileAppender(pathB, OpenMode.WRITE));
-        Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), #out);
+        Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), out);
         log.info("teed");
 
         int8[] ba = File.readAllBytes(pathA);

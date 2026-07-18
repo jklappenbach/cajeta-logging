@@ -1,10 +1,10 @@
 package dev.cajeta.logging.selftest;
 
 import dev.cajeta.unit.Assert;
-import dev.cajeta.logging.Log;
 import dev.cajeta.logging.Logger;
 import dev.cajeta.logging.Level;
 import dev.cajeta.logging.LogRecord;
+import dev.cajeta.logging.JsonlEncoder;
 import dev.cajeta.logging.CapturingAppender;
 
 /**
@@ -22,7 +22,7 @@ public class LoggingTest {
     @Test
     public void infoLineIsCapturedAsJsonl() {
         CapturingAppender sink = heap CapturingAppender();
-        Logger log = Log.capturing("svc", Level.INFO, #sink);
+        Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), sink);
         log.info("service started");
         Assert.that(sink.count()).isEqualTo(1);
         String line = sink.get(0);
@@ -35,7 +35,7 @@ public class LoggingTest {
     @Test
     public void belowThresholdIsGatedOut() {
         CapturingAppender sink = heap CapturingAppender();
-        Logger log = Log.capturing("svc", Level.WARN, #sink);
+        Logger log = heap Logger("svc", Level.WARN, heap JsonlEncoder(), sink);
         log.info("not severe enough");
         Assert.that(sink.count()).isEqualTo(0);
         log.warn("now we are talking");
@@ -46,7 +46,7 @@ public class LoggingTest {
     @Test
     public void fieldsRenderAfterReservedKeys() {
         CapturingAppender sink = heap CapturingAppender();
-        Logger log = Log.capturing("svc", Level.INFO, #sink);
+        Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), sink);
         LogRecord r = log.event(Level.WARN, "slow request");
         r.str("route", "/checkout").i64("ms", 1200).flag("retried", true);
         log.emit(#r);

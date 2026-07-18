@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# Build + run the cajeta-logging unit tests (Tier-1 Phase 1).
+# Build + run the cajeta-logging unit tests.
 #
 # The suite lives under src/test/cajeta and is driven by cajeta-unit's
-# reflective @Test discovery (dev.cajeta.unit.Runner). It compiles ONLY the
-# test sources into an executable, with the logging library and cajeta-unit
-# both supplied as .cja classpath dependencies — the compiler links their
-# bitcode into the test binary (requires a toolchain with classpath-bitcode
-# linking, cajeta >= 0.7.1-dev with that fix).
+# reflective @Test discovery (dev.cajeta.unit.Runner).
 #
-# Until `cajeta test` can resolve a dev-dependency + the project's own lib
-# onto the test classpath, this script is the supported entry point.
+# The library and test sources are compiled TOGETHER under --profile=test into
+# one executable (cajeta-unit supplied as a .cja classpath dep). This matters
+# for the DI-wired logger: compile-time DI resolves the graph in the FINAL
+# binary, so the profile-selected providers (@Profile) and the @TestComponent
+# CapturingAppender masking only apply when the components' sources are part of
+# this compile. A precompiled library .cja carries DI wiring frozen at its own
+# build profile and does not re-resolve under --profile=test.
 #
 # Override paths via env:
 #   CAJETA    — compiler binary (default: cajeta on PATH)
@@ -29,14 +30,17 @@ if [[ ! -f "$unit_cja" ]]; then
     ( cd "$UNIT_REPO" && "$CAJETA" build >/dev/null )
 fi
 
-echo ">> building logging library .cja"
-"$CAJETA" --emit=cja -o "$out/logging.cja" \
-    dev.cajeta.logging.Log.run "$here/src/main/cajeta" "$out" >/dev/null
+# Merge library + test sources into one root so the DI graph resolves in the
+# final --profile=test binary (see header).
+srcroot="$out/src"
+mkdir -p "$srcroot"
+cp -r "$here/src/main/cajeta/." "$srcroot/"
+cp -r "$here/src/test/cajeta/." "$srcroot/"
 
-echo ">> building + running the test binary"
+echo ">> building + running the test binary (lib+test sources, --profile=test)"
 "$CAJETA" --emit=exe --profile=test \
-    --classpath="$out/logging.cja,$unit_cja" \
+    --classpath="$unit_cja" \
     -o "$out/logtests" \
-    dev.cajeta.logging.selftest.TestMain.run "$here/src/test/cajeta" "$out" >/dev/null
+    dev.cajeta.logging.selftest.TestMain.run "$srcroot" "$out/build" >/dev/null
 
 "$out/logtests"
