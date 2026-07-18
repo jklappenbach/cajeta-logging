@@ -26,7 +26,8 @@ public class LoggedReflectionDiscoveryTest {
 
     @Test
     public void logIsInitializedOnReflectivelyDiscoveredClass() {
-        Assert.that(log.name).isEqualTo(
+        String actual = log.name;
+        Assert.that(actual).isEqualTo(
             "dev.cajeta.logging.selftest.LoggedReflectionDiscoveryTest");
     }
 }

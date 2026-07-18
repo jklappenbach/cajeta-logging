@@ -24,7 +24,11 @@ public final class Logger {
     LogEncoder encoder;
     Appender appender;
 
-    public Logger(String name, Level threshold, #LogEncoder encoder, #Appender appender) {
+    // Dual-capable sinks (title-tracking): a caller that surrenders (`#sink`
+    // or a fresh `heap ...()`) makes the field own + drop it; a caller that
+    // lends a shared instance (a DI singleton, via LoggerFactory) makes the
+    // field borrow, and the logger's drop leaves the shared sink alone.
+    public Logger(String name, Level threshold, LogEncoder encoder, Appender appender) {
         this.name = name;
         this.threshold = threshold;
         this.encoder = encoder;

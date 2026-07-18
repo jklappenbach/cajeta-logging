@@ -5,7 +5,9 @@ import cajeta.lang.String;
 /**
  * Writes each encoded line to stdout via `println` (which supplies the newline).
  * A TTY-gated colorized variant is a Phase-3 concern; this is the plain sink.
+ * The `Appender` under `--profile=dev` (human-readable text to the console).
  */
+@Component @Profile("dev")
 public final class ConsoleAppender implements Appender {
 
     public ConsoleAppender() {

@@ -83,10 +83,20 @@ the `LogEncoder` rename; compiler name-resolution fix tracked separately._
       `rename`/`delete`/`exists` static op yet (needed to roll current→`.N`).
 - [ ] `AsyncAppender` over a worker fiber + `Channel<LogRecord>`; back-pressure policy
       (block / drop-oldest / drop-newest).
-- [ ] `LoggerFactory` as `@Component` (singleton); appenders/encoder as components;
-      `@Profile` prod(JSONL→file)/dev(text+color→console); `@TestComponent` capturing appender.
-- [ ] **Milestone: the basics are usable** — a service can log structured JSONL to a file
-      and colored text to the console, all DI-wired and test-overridable.
+- [x] `LoggerFactory` as `@Component` (singleton); appenders/encoder as components;
+      `@Profile` prod(JSONL→file)/dev(text→console); `@TestComponent` capturing appender.
+      **DONE** (Option A: loggers borrow DI-singleton sinks; `Log.defaultFor` routes through
+      the factory so `@Logged` is DI-wired unchanged). Full suite **20/20 green** via
+      `run-tests.sh` (compiles lib+test sources together under `--profile=test`). Fixes that
+      got here: (a) cajeta-two `@Logged` synth imported the stale `org.cajeta.logging` → fixed
+      to `dev.cajeta.logging` (was the whole "LogRecord/String heap-corruption cascade" — a
+      single namespace bug); (b) drop-wrapper `linkonce_odr` (merged main); (c) `LogFmt.quote`
+      chained-`replace` double-free hoist; (d) selftests moved to sound patterns (DI /
+      direct-encode / own-and-read-file). FileAppender is a plain `@Component` (not `@Factory`)
+      pending the `@Profile`-filters-`@Factory` gap. TTY color deferred.
+- [x] **Milestone: the basics are usable** — a service logs structured JSONL to a file and
+      text to the console, all DI-wired and test-overridable (`@Profile` prod/dev/test,
+      `@TestComponent` mask). Proven by the 20/20 suite.
 
 ### Phase 4 — system log, explicit-handle form  *(Tier 1)*
 - [ ] `SystemLogEntry`: typed KV document, `put/putDuration/...`, internal `Mutex` for

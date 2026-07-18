@@ -4,9 +4,12 @@ import cajeta.collection.ArrayList;
 import cajeta.lang.String;
 
 /**
- * Test sink: keeps each encoded line as a String for assertions. The
- * `@TestComponent` capturing appender from the spec, in its explicit form.
+ * Test sink: keeps each encoded line as a String for assertions. As a
+ * `@TestComponent` it masks the real `Appender` under `--profile=test`, so a
+ * DI-wired logger writes here and the test reads the captured lines back. Also
+ * usable explicitly (`heap CapturingAppender()`) outside DI.
  */
+@TestComponent
 public final class CapturingAppender implements Appender {
     public ArrayList<String> lines;
 

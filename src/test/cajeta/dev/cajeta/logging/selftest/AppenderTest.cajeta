@@ -27,7 +27,8 @@ public class AppenderTest {
         Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), #out);
         log.info("first");
         log.info("second");
-        out.close();
+        // FileAppender flushes per line, so bytes are on disk after emit; the
+        // logger owns `out` and drops it at scope end (no read of `out` here).
 
         int8[] bytes = File.readAllBytes(path);
         int32 n = (int32) bytes.count();
@@ -46,7 +47,6 @@ public class AppenderTest {
         Logger log = heap Logger("svc", Level.WARN, heap JsonlEncoder(), #out);
         log.info("should not appear");
         log.warn("kept");
-        out.close();
 
         int8[] bytes = File.readAllBytes(path);
         int32 n = (int32) bytes.count();
