@@ -15,7 +15,7 @@ final class LogFmt {
 
     /** Owned, exactly-`byteLength` copy of `s`'s bytes (no capacity slack). */
     static #int8[] bytesOf(String s) {
-        int32 n = s.byteLength;
+        int32 n = s.byteLength();
         int8[] out = heap int8[n];
         int32 i = 0;
         while (i < n) {

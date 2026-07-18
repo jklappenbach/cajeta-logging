@@ -26,7 +26,7 @@ public final class Log {
 
     /** A logger that captures encoded lines in-memory (for tests). */
     public static #Logger capturing(String name, Level threshold, #CapturingAppender sink) {
-        return heap Logger(name, threshold, heap JsonlEncoder(), sink);
+        return heap Logger(name, threshold, heap JsonlEncoder(), #sink);
     }
 
     /**

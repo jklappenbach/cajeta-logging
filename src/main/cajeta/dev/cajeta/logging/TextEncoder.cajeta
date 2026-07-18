@@ -37,9 +37,9 @@ public final class TextEncoder implements LogEncoder {
     }
 
     /** Right-pad a level name to width 5 (the longest: TRACE/DEBUG/ERROR). */
-    static String padLevel(String name) {
+    static #String padLevel(String name) {
         String s = "" + name;
-        while (s.byteLength < 5) {
+        while (s.byteLength() < 5) {
             s = s + " ";
         }
         return s;
