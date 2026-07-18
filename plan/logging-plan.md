@@ -83,10 +83,20 @@ the `LogEncoder` rename; compiler name-resolution fix tracked separately._
       `rename`/`delete`/`exists` static op yet (needed to roll current→`.N`).
 - [ ] `AsyncAppender` over a worker fiber + `Channel<LogRecord>`; back-pressure policy
       (block / drop-oldest / drop-newest).
-- [ ] `LoggerFactory` as `@Component` (singleton); appenders/encoder as components;
-      `@Profile` prod(JSONL→file)/dev(text+color→console); `@TestComponent` capturing appender.
+- [~] `LoggerFactory` as `@Component` (singleton); appenders/encoder as components;
+      `@Profile` prod(JSONL→file)/dev(text→console); `@TestComponent` capturing appender.
+      **CORE DONE + validated** (`4989326`, Option A: loggers borrow DI-singleton sinks;
+      `Log.defaultFor` routes through the factory; `DiLoggingTest` 2/2 green via
+      source-together compile under `--profile=test`). Blocked on two follow-ups before the
+      whole suite runs: (1) `run-tests.sh` must compile lib+test SOURCES together under the
+      profile — a precompiled `.cja` re-consumed under `--profile=test` fails to compose
+      (`UNRESOLVED_PLACEHOLDER: Logger`); (2) migrate existing selftests to 0.9.0
+      (`AppenderTest` reads `out` after `#out` → `USE_AFTER_MOVE`). Also: FileAppender is a
+      plain `@Component` (not `@Factory`) because `@Profile`/`@TestComponent` don't yet
+      filter `@Factory` providers — a di-profile-selection follow-up. TTY color deferred.
 - [ ] **Milestone: the basics are usable** — a service can log structured JSONL to a file
-      and colored text to the console, all DI-wired and test-overridable.
+      and text to the console, all DI-wired and test-overridable. (Gated on the two
+      follow-ups above; core wiring proven.)
 
 ### Phase 4 — system log, explicit-handle form  *(Tier 1)*
 - [ ] `SystemLogEntry`: typed KV document, `put/putDuration/...`, internal `Mutex` for
