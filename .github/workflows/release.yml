@@ -2,17 +2,28 @@ name: release
 
 on:
   push:
-    tags: ['v*']
-  pull_request:
     branches: [main]
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:
   contents: write
 
-# Builds the library .cja on every PR; on a v* tag also publishes a GitHub
-# Release and a signed publish to Olla. Logic lives in the reusable workflow.
+# Builds + tests the library on a main push; on a v* tag also publishes a
+# GitHub Release and a signed publish to Olla. Logic lives in the reusable
+# workflow. No `pull_request:` trigger by design — changes land by pushing
+# straight to main, so a PR trigger would never fire.
 jobs:
   release:
     uses: jklappenbach/cajeta/.github/workflows/lib-release.yml@main
+    with:
+      # Pin explicitly. Omitting this inherits the reusable workflow's default —
+      # which is how cajeta-unit silently built against v0.7.1 for a month.
+      cajeta-version: v0.10.1
+      # run-tests.sh compiles the library + test sources together under
+      # --profile=test (the DI graph must resolve in the final binary) and
+      # resolves cajeta-unit itself: sibling checkout when present, else a
+      # sha256-verified fetch from Olla at the version pinned in cajeta.json's
+      # dev-dependencies. On a bare runner it takes the fetch path.
+      test-command: ./run-tests.sh
     secrets: inherit
