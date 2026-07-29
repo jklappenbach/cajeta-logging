@@ -1,0 +1,84 @@
+# Publish a SIBLING library's .cja to Olla using THIS repo's OLLA_* secrets.
+#
+# Authorized by Julian 2026-07-29 ("I explicitly give you permission to bridge
+# to other projects to get the secrets you need to publish on my behalf").
+#
+# Why: GitHub secrets are write-only and per-repo. cajeta-xgboost has no
+# OLLA_* secrets yet, but its releases are otherwise complete (its own
+# workflow publishes the GitHub Release). This workflow checks the sibling
+# out at an exact tag, builds the identical artifact with the pinned
+# toolchain, asserts the tag matches the sibling's manifest, and runs the
+# same signed olla-publish action every release workflow uses. The registry
+# keys packages by manifest name, not by publishing repo. The secret values
+# never leave the action.
+#
+# workflow_dispatch-only. Delete (or leave dormant) once the sibling repos
+# carry their own secrets.
+
+name: publish-sibling
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: 'Sibling repository (owner/name)'
+        required: true
+        default: 'jklappenbach/cajeta-xgboost'
+      ref:
+        description: 'Exact tag to publish (vX.Y.Z)'
+        required: true
+      cajeta-version:
+        description: 'Toolchain release to build with'
+        required: true
+        default: 'v0.11.0'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the sibling at the tag
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repo }}
+          ref: ${{ inputs.ref }}
+
+      - name: Install cajeta toolchain (${{ inputs.cajeta-version }})
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release download "${{ inputs.cajeta-version }}" --repo jklappenbach/cajeta \
+            --pattern 'cajeta_*_amd64.deb' --dir /tmp
+          sudo apt-get update
+          sudo apt-get install -y /tmp/cajeta_*_amd64.deb
+          cajeta --version || true
+
+      - name: Build the .cja and assert the tag matches the manifest
+        id: build
+        run: |
+          set -euo pipefail
+          VERSION="$(cajeta info | awk '/^[[:space:]]*version:/{print $2; exit}')"
+          [ -n "$VERSION" ] || { echo "::error::no version from cajeta info"; exit 1; }
+          tag_version="${{ inputs.ref }}"
+          tag_version="${tag_version#v}"
+          if [ "$tag_version" != "$VERSION" ]; then
+            echo "::error::ref ${{ inputs.ref }} disagrees with manifest version ${VERSION}" >&2
+            exit 1
+          fi
+          cajeta build
+          cja="$(ls build/archive/*.cja | head -1)"
+          [ -f "$cja" ] || { echo "::error::no .cja built"; exit 1; }
+          echo "cja=$cja" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to Olla (this repo's credentials)
+        uses: jklappenbach/cajeta/.github/actions/olla-publish@main
+        with:
+          cja-path: ${{ steps.build.outputs.cja }}
+          version: ${{ steps.build.outputs.version }}
+          token: ${{ secrets.OLLA_TOKEN }}
+          signing-key-pem: ${{ secrets.OLLA_SIGNING_KEY_PEM }}
+          signing-key-id: ${{ secrets.OLLA_SIGNING_KEY_ID }}
