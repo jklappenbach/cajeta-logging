@@ -12,7 +12,17 @@ printing to stdout:
 7. `CompositeAppender` fan-out (one emit, two sinks)
 8. `@Logged` + DI — the synthesized, profile-wired logger
 
-Run:
+## Two ways to run
+
+**Manifest (sections 1–7)** — the tour as a real consumer of the published
+library, resolved from Olla like any application dependency:
+
+```sh
+cajeta run
+```
+
+**run.sh (all 8 sections)** — library + tour + `src-di` sources compiled
+together into one binary:
 
 ```sh
 ./run.sh                       # cajeta on PATH, --profile=dev
@@ -20,12 +30,16 @@ CAJETA=/path/to/cajeta ./run.sh
 PROFILE=test ./run.sh          # a different DI profile for section 8
 ```
 
-Library and tour sources compile together into one binary — the same rule as
-`run-tests.sh`: compile-time DI resolves in the final compile, so the
-`@Profile`-selected providers behind `Log.defaultFor` only wire correctly when
-the library sources are part of it. The explicit sections (1–7) construct
-their encoders and appenders directly and behave the same under any profile;
-only section 8 changes with `PROFILE`.
+## Why section 8 is script-only
+
+Compile-time DI resolves in the final compile — the same rule that shapes
+`run-tests.sh`. The `@Profile`-selected providers behind `Log.defaultFor`
+(what `@Logged`'s synthesized logger uses) wire correctly only when the
+library SOURCES are part of the consumer's compile; a precompiled `.cja`
+carries wiring frozen at its own build profile. A manifest can't express a
+from-source dependency today, so the `@Logged` demo lives in `src-di/`, which
+only `run.sh` merges in. Sections 1–7 construct their encoders and appenders
+explicitly and behave identically on both paths.
 
 The plain `===` banner lines between the records are deliberate: a real
 console stream interleaves structured records with plain text, and the tour's

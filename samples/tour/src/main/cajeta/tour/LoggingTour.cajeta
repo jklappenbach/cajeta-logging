@@ -12,39 +12,27 @@ import dev.cajeta.logging.CapturingAppender;
 import dev.cajeta.logging.CompositeAppender;
 
 /**
- * A service carrying `@Logged` — the compiler synthesizes
- * `static Logger log = Log.defaultFor("tour.CheckoutService")`, so `log` is
- * never declared here. Routed through the DI-wired LoggerFactory: the encoder
- * and appender are the profile-selected singletons (dev → text/console,
- * prod → JSONL/file, test → capturing).
- */
-@Logged
-class CheckoutService {
-    public CheckoutService() {
-        return;
-    }
-
-    public void pay(String route, int64 ms) {
-        LogRecord r = log.event(Level.INFO, "payment settled");
-        r.str("route", route).i64("ms", ms);
-        log.emit(#r);
-    }
-
-    public String loggerName() {
-        return log.name;
-    }
-}
-
-/**
- * The cajeta-logging tour: every public surface of the library, section by
- * section, to stdout. The plain `===` banner lines are deliberate — a mixed
- * stream (JSONL records + plain text) is exactly what log consumers see.
- * Run via run.sh (library + tour sources compile together, so the DI-wired
- * sections resolve under the chosen --profile).
+ * The cajeta-logging tour: the library's public surface, section by section,
+ * to stdout. The plain `===` banner lines are deliberate — a mixed stream
+ * (JSONL records + plain text) is exactly what log consumers see.
+ *
+ * Sections 1–7 construct their encoders and appenders explicitly, so they
+ * behave identically against the published `.cja` (this manifest's build) and
+ * a from-source compile. Section 8 (`@Logged` + DI) needs the library SOURCES
+ * in the same compile (compile-time DI resolves in the final binary), so it
+ * lives in `../../src-di` and only runs via `run.sh` — see the README.
  */
 public final class LoggingTour {
 
-    public static int32 run() {
+    public static int32 main(String[] args) {
+        LoggingTour.sections();
+        System.stdout.println("=== 8. @Logged + DI: needs a from-source compile — run ./run.sh ===");
+        System.stdout.println("=== tour complete ===");
+        return 0;
+    }
+
+    /** Sections 1–7 — shared by the manifest entry and run.sh's DI entry. */
+    public static void sections() {
         System.stdout.println("=== 1. tier-1 facade: Log.console -> compact JSONL on stdout ===");
         Logger log = Log.console("tour.facade", Level.INFO);
         log.info("service started");
@@ -93,14 +81,6 @@ public final class LoggingTour {
         fan.add(#heap ConsoleAppender()).add(#heap ConsoleAppender());
         Logger fanned = heap Logger("tour.fan", Level.INFO, heap JsonlEncoder(), #fan);
         fanned.info("this line appears twice - two console sinks");
-
-        System.stdout.println("=== 8. @Logged + DI: the synthesized, profile-wired logger ===");
-        CheckoutService svc = heap CheckoutService();
-        System.stdout.println("synthesized logger name: " + svc.loggerName());
-        svc.pay("/checkout", 42);
-
-        System.stdout.println("=== tour complete ===");
-        return 0;
     }
 
     static void sample(Logger l) {

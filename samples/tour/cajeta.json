@@ -1,0 +1,63 @@
+{
+    // cajeta-logging tour — an executable consumer of the PUBLISHED library
+    // (dev.cajeta.logging from Olla), the way a real application depends on
+    // it. Covers tour sections 1–7 (explicitly constructed encoders and
+    // appenders). Section 8 (`@Logged` + DI) needs the library sources in the
+    // same compile, which a manifest cannot express today — ./run.sh covers
+    // it (see README.md).
+    //
+    //   cajeta run    → resolve dep, build, execute
+
+    "details": {
+        "name":                "logging-tour",
+        "version":             "0.1.0",
+        "description":         "cajeta-logging library tour (manifest half: sections 1-7)",
+        "license":             "Apache-2.0",
+        "authors":             ["Julian Klappenbach"],
+        "cajeta-lang-version": "1.0"
+    },
+
+    "settings": {
+        "capabilities": [],
+
+        "dependencies": {
+            "dev.cajeta.logging": "0.6.0"
+        },
+
+        "repositories": [
+            { "name": "central", "url": "https://olla.cajeta.dev",
+              "priority": 0 }
+        ],
+
+        "build": {
+            "source-root":  "src/main/cajeta",
+            "target":       "host",
+            "entry-method": "tour.LoggingTour::main"
+        }
+    },
+
+    "tasks": {
+        "build": {
+            "description": "Build the tour executable",
+            "actions": [
+                { "action": "build", "flavor": "debug",
+                  "output-path": "build/logging-tour", "id": "art" }
+            ],
+            "outputs": { "path": "${art.path}", "sha256": "${art.sha256}" }
+        },
+
+        "run": {
+            "description": "Build the tour and run it (sections 1-7)",
+            "actions": [
+                { "action": "build", "flavor": "debug",
+                  "output-path": "build/logging-tour", "id": "art" },
+                { "action": "exec", "command": "${art.path}" }
+            ]
+        },
+
+        "clean": {
+            "description": "Wipe build outputs",
+            "actions": [ { "action": "clean" } ]
+        }
+    }
+}

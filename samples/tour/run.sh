@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Build + run the cajeta-logging tour (samples/tour).
+# Build + run the FULL cajeta-logging tour (sections 1–8).
 #
-# Library and tour sources are compiled TOGETHER into one executable — the
-# same rule as run-tests.sh: compile-time DI resolves the graph in the FINAL
-# binary, so the @Profile-selected providers behind `Log.defaultFor` (and the
-# `@Logged` section) only wire correctly when the library sources are part of
-# this compile.
+# Library, tour, and src-di sources are compiled TOGETHER into one executable —
+# the same rule as run-tests.sh: compile-time DI resolves the graph in the
+# FINAL binary, so the @Profile-selected providers behind `Log.defaultFor`
+# (section 8, `@Logged`) only wire correctly when the library sources are part
+# of this compile. For the manifest-driven half (sections 1–7 against the
+# published .cja), use `cajeta run` with the cajeta.json beside this script.
 #
 #   PROFILE — DI profile (default: dev → text encoder + console appender for
 #             the @Logged/DI section; the explicit JSONL sections emit JSONL
@@ -25,9 +26,10 @@ srcroot="$out/src"
 mkdir -p "$srcroot"
 cp -r "$root/src/main/cajeta/." "$srcroot/"
 cp -r "$here/src/main/cajeta/." "$srcroot/"
+cp -r "$here/src-di/cajeta/." "$srcroot/"
 
 "$CAJETA" --emit=exe --profile="$PROFILE" \
     -o "$out/logging-tour" \
-    tour.LoggingTour.run "$srcroot" "$out/build" >/dev/null
+    tour.LoggingTourDi.run "$srcroot" "$out/build" >/dev/null
 
 "$out/logging-tour"

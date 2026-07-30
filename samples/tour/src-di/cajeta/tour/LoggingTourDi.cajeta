@@ -1,0 +1,50 @@
+package tour;
+
+import dev.cajeta.logging.Level;
+import dev.cajeta.logging.LogRecord;
+
+/**
+ * A service carrying `@Logged` — the compiler synthesizes
+ * `static Logger log = Log.defaultFor("tour.CheckoutService")`, so `log` is
+ * never declared here. Routed through the DI-wired LoggerFactory: the encoder
+ * and appender are the profile-selected singletons (dev → text/console,
+ * prod → JSONL/file, test → capturing).
+ */
+@Logged
+class CheckoutService {
+    public CheckoutService() {
+        return;
+    }
+
+    public void pay(String route, int64 ms) {
+        LogRecord r = log.event(Level.INFO, "payment settled");
+        r.str("route", route).i64("ms", ms);
+        log.emit(#r);
+    }
+
+    public String loggerName() {
+        return log.name;
+    }
+}
+
+/**
+ * run.sh's entry: sections 1–7 plus the `@Logged`/DI section. Lives in this
+ * separate source root (src-di) because compile-time DI needs the LIBRARY
+ * SOURCES in the same compile — the manifest build against the published
+ * `.cja` must not include this file (its wiring would be frozen at the
+ * archive's build profile).
+ */
+public final class LoggingTourDi {
+
+    public static int32 run() {
+        LoggingTour.sections();
+
+        System.stdout.println("=== 8. @Logged + DI: the synthesized, profile-wired logger ===");
+        CheckoutService svc = heap CheckoutService();
+        System.stdout.println("synthesized logger name: " + svc.loggerName());
+        svc.pay("/checkout", 42);
+
+        System.stdout.println("=== tour complete ===");
+        return 0;
+    }
+}
