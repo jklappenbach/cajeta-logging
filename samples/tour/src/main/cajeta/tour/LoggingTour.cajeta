@@ -1,0 +1,111 @@
+package tour;
+
+import dev.cajeta.logging.Level;
+import dev.cajeta.logging.Log;
+import dev.cajeta.logging.LogRecord;
+import dev.cajeta.logging.Logger;
+import dev.cajeta.logging.JsonlEncoder;
+import dev.cajeta.logging.TextEncoder;
+import dev.cajeta.logging.LogfmtEncoder;
+import dev.cajeta.logging.ConsoleAppender;
+import dev.cajeta.logging.CapturingAppender;
+import dev.cajeta.logging.CompositeAppender;
+
+/**
+ * A service carrying `@Logged` — the compiler synthesizes
+ * `static Logger log = Log.defaultFor("tour.CheckoutService")`, so `log` is
+ * never declared here. Routed through the DI-wired LoggerFactory: the encoder
+ * and appender are the profile-selected singletons (dev → text/console,
+ * prod → JSONL/file, test → capturing).
+ */
+@Logged
+class CheckoutService {
+    public CheckoutService() {
+        return;
+    }
+
+    public void pay(String route, int64 ms) {
+        LogRecord r = log.event(Level.INFO, "payment settled");
+        r.str("route", route).i64("ms", ms);
+        log.emit(#r);
+    }
+
+    public String loggerName() {
+        return log.name;
+    }
+}
+
+/**
+ * The cajeta-logging tour: every public surface of the library, section by
+ * section, to stdout. The plain `===` banner lines are deliberate — a mixed
+ * stream (JSONL records + plain text) is exactly what log consumers see.
+ * Run via run.sh (library + tour sources compile together, so the DI-wired
+ * sections resolve under the chosen --profile).
+ */
+public final class LoggingTour {
+
+    public static int32 run() {
+        System.stdout.println("=== 1. tier-1 facade: Log.console -> compact JSONL on stdout ===");
+        Logger log = Log.console("tour.facade", Level.INFO);
+        log.info("service started");
+        log.warn("queue depth above threshold");
+        log.error("downstream refused connection");
+        log.debug("below threshold - never emitted");
+
+        System.stdout.println("=== 2. fielded records: event + str/i64/f64/flag + emit ===");
+        LogRecord slow = log.event(Level.WARN, "slow request");
+        slow.str("route", "/checkout").i64("ms", 1200).flag("retried", true).f64("p99", 0.987);
+        log.emit(#slow);
+
+        System.stdout.println("=== 3. enabled() guards a fielded build (SLF4J isDebugEnabled style) ===");
+        if (log.enabled(Level.DEBUG)) {
+            LogRecord d = log.event(Level.DEBUG, "expensive diagnostics");
+            d.i64("cache_entries", 123456);
+            log.emit(#d);
+        } else {
+            System.stdout.println("debug fielded build skipped - threshold is INFO");
+        }
+
+        System.stdout.println("=== 4. encoders: the same record as JSONL, text, and logfmt ===");
+        Logger asJsonl = heap Logger("tour.enc", Level.INFO, heap JsonlEncoder(), heap ConsoleAppender());
+        Logger asText = heap Logger("tour.enc", Level.INFO, heap TextEncoder(), heap ConsoleAppender());
+        Logger asLogfmt = heap Logger("tour.enc", Level.INFO, heap LogfmtEncoder(), heap ConsoleAppender());
+        LoggingTour.sample(asJsonl);
+        LoggingTour.sample(asText);
+        LoggingTour.sample(asLogfmt);
+
+        System.stdout.println("=== 5. threshold gating: a WARN-gated logger drops info ===");
+        Logger quiet = Log.console("tour.quiet", Level.WARN);
+        quiet.info("dropped - below WARN");
+        quiet.warn("kept - at threshold");
+
+        System.stdout.println("=== 6. CapturingAppender: lend the sink, read the lines back ===");
+        CapturingAppender cap = heap CapturingAppender();
+        // The logger BORROWS `cap` (no `#`), so the tour still owns it and can
+        // read the captured lines after emitting - the test-assertion shape.
+        Logger captured = heap Logger("tour.cap", Level.INFO, heap JsonlEncoder(), cap);
+        captured.info("first captured line");
+        captured.info("second captured line");
+        System.stdout.println("captured " + cap.count() + " lines; [0] = " + cap.get(0));
+
+        System.stdout.println("=== 7. CompositeAppender: one emit fans out to every sink ===");
+        CompositeAppender fan = heap CompositeAppender();
+        fan.add(#heap ConsoleAppender()).add(#heap ConsoleAppender());
+        Logger fanned = heap Logger("tour.fan", Level.INFO, heap JsonlEncoder(), #fan);
+        fanned.info("this line appears twice - two console sinks");
+
+        System.stdout.println("=== 8. @Logged + DI: the synthesized, profile-wired logger ===");
+        CheckoutService svc = heap CheckoutService();
+        System.stdout.println("synthesized logger name: " + svc.loggerName());
+        svc.pay("/checkout", 42);
+
+        System.stdout.println("=== tour complete ===");
+        return 0;
+    }
+
+    static void sample(Logger l) {
+        LogRecord r = l.event(Level.INFO, "encoder sample");
+        r.str("shape", "same-record").i64("n", 7);
+        l.emit(#r);
+    }
+}
