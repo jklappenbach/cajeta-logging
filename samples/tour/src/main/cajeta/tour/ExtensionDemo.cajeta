@@ -1,0 +1,145 @@
+package tour;
+
+import dev.cajeta.logging.Level;
+import dev.cajeta.logging.Levels;
+import dev.cajeta.logging.Logger;
+import dev.cajeta.logging.LogRecord;
+import dev.cajeta.logging.LogField;
+import dev.cajeta.logging.LogEncoder;
+import dev.cajeta.logging.Appender;
+import dev.cajeta.logging.JsonlEncoder;
+
+// The extension points — the library's two public interfaces:
+//
+//   LogEncoder   #int8[] encode(LogRecord r)   // render one line's bytes
+//   Appender     void append(#int8[] line)     // ship them (owns the bytes)
+//
+// A custom encoder switches on LogField.kind (0 str, 1 i64, 2 bool, 3 f64)
+// — LogField is a lightweight tagged value, not a JSON tree, so encoding
+// stays alloc-light. A custom appender receives OWNED bytes and decides
+// their fate.
+//
+// The scenario: two real extensions —
+//   TsvEncoder   tab-separated lines for spreadsheet/awk ingestion
+//   RingAppender a crash-dump ring buffer holding the last 3 lines
+//                (what you dump when the process is dying)
+
+// support: tab-separated encoder — ts, LEVEL, logger, msg, then k=v pairs.
+class TsvEncoder implements LogEncoder {
+    public TsvEncoder() {
+        return;
+    }
+
+    public #int8[] encode(LogRecord r) {
+        String line = "" + r.ts + "\t" + Levels.name(r.level) + "\t"
+            + r.logger + "\t" + r.msg;
+        int32 i = 0;
+        while (i < (int32) r.fields.count()) {
+            LogField f = r.fields.get(i);
+            line = line + "\t" + f.key + "=";
+            if (f.kind == 0) {
+                line = line + f.sval;
+            } else if (f.kind == 1) {
+                line = line + f.ival;
+            } else if (f.kind == 2) {
+                line = line + f.bval;
+            } else {
+                line = line + f.fval;
+            }
+            i = i + 1;
+        }
+        int8[] bytes = line.toBytes();
+        return #bytes;
+    }
+}
+
+// support: a ring buffer of the last 3 encoded lines — the crash-dump
+// pattern: cheap always-on capture, dumped only when something dies. A
+// fixed owned array + a rotating write index; overwriting a slot drops
+// the evicted line.
+class RingAppender implements Appender {
+    public String[] slots;
+    public int32 total;
+
+    public RingAppender() {
+        this.slots = heap String[3];
+        this.total = 0;
+    }
+
+    public void append(#int8[] line) {
+        int32 n = (int32) line.count();
+        String s = heap String(#line, n);
+        int32 at = this.total % 3;
+        this.slots[at] = #s;
+        this.total = this.total + 1;
+    }
+
+    public int32 count() {
+        if (this.total < 3) {
+            return this.total;
+        }
+        return 3;
+    }
+
+    /** Oldest-first view over the ring. */
+    public String get(int32 i) {
+        if (this.total <= 3) {
+            return this.slots[i];
+        }
+        int32 at = (this.total + i) % 3;
+        return this.slots[at];
+    }
+}
+
+public class ExtensionDemo extends DemoClass {
+
+    public void execute() {
+        System.stdout.println("");
+        System.stdout.println("-- Extension points: a custom encoder and a custom appender --");
+
+        // 1. The custom encoder in a real logger. The ring keeps only the
+        //    last 3 of 5 lines — the crash-dump window.
+        RingAppender ring = heap RingAppender();
+        Logger log = heap Logger("orders.worker", Level.INFO,
+            heap TsvEncoder(), ring);
+        log.info("job 1 picked up");
+        log.info("job 2 picked up");
+        log.info("job 3 picked up");
+        log.warn("job 4 slow");
+        LogRecord fail = log.event(Level.ERROR, "job 5 failed");
+        fail.str("queue", "payments").i64("attempt", 3).flag("fatal", true);
+        log.emit(#fail);
+
+        this.check(ring.count() == 3,
+            "the ring holds exactly the last 3 lines of 5 emitted");
+        String last = ring.get(2);
+        System.stdout.println("  crash dump tail: " + last);
+        this.check(last.contains("ERROR\torders.worker\tjob 5 failed"),
+            "TsvEncoder renders ts, LEVEL, logger, msg tab-separated");
+        this.check(last.contains("queue=payments")
+            && last.contains("attempt=3") && last.contains("fatal=true"),
+            "the encoder switched on LogField.kind for every field type");
+        this.check(ring.get(0).contains("job 3"),
+            "the oldest lines (jobs 1-2) were evicted");
+
+        // 2. LogField itself — the tagged value an encoder consumes.
+        //    kind selects the payload slot; unused slots stay at their
+        //    zero defaults, so the drop chain stays sound.
+        LogField f = heap LogField("route", 0);
+        f.sval = "/checkout";
+        this.check(f.kind == 0 && f.sval.equals("/checkout")
+            && f.ival == (int64) 0 && !f.bval,
+            "LogField: kind tags the one live payload slot");
+
+        // 3. The interfaces compose with the stock pieces: the SAME ring
+        //    can sit behind the stock JsonlEncoder — encoder and appender
+        //    vary independently.
+        RingAppender jsonRing = heap RingAppender();
+        Logger jlog = heap Logger("orders.worker", Level.INFO,
+            heap JsonlEncoder(), jsonRing);
+        jlog.error("dying gasp");
+        this.check(jsonRing.count() == 1
+            && jsonRing.get(0).contains("\"msg\":\"dying gasp\""),
+            "a custom appender works unchanged behind a stock encoder");
+    }
+}

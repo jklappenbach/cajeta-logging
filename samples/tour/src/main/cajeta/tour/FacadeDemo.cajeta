@@ -1,0 +1,85 @@
+package tour;
+
+import dev.cajeta.logging.Level;
+import dev.cajeta.logging.Log;
+import dev.cajeta.logging.Logger;
+import dev.cajeta.logging.LogRecord;
+import dev.cajeta.logging.JsonlEncoder;
+import dev.cajeta.logging.CapturingAppender;
+
+// The tier-1 facade — dev.cajeta.logging.Log and the Logger it hands out:
+//
+//   Logger log = Log.console(name, threshold);   // JSONL to stdout
+//   log.info("...") / warn / error / debug / trace
+//   log.event(level, msg).str(...).i64(...) -> log.emit(#r)   // fielded
+//   log.enabled(level)                            // build-guard
+//
+// LogRecord's builders are chainable and typed (str/i64/flag/f64); emit(#r)
+// CONSUMES the record — a record is built once, emitted once. enabled() is
+// the SLF4J-isDebugEnabled shape: skip building an expensive record when
+// the threshold would drop it anyway.
+//
+// The scenario: an order service's lifecycle, narrated to the console and
+// asserted through a capturing twin of the same logger.
+public class FacadeDemo extends DemoClass {
+
+    public void execute() {
+        System.stdout.println("");
+        System.stdout.println("-- The facade: Log.console, level methods, fielded records --");
+
+        // Narration: real JSONL on stdout, exactly what ops sees.
+        Logger log = Log.console("orders.service", Level.INFO);
+        log.info("service started");
+        log.warn("queue depth above threshold");
+        log.error("downstream refused connection");
+        log.debug("below threshold - never emitted");
+        log.trace("far below threshold - never emitted");
+
+        // Assertions: the same calls against a capturing twin. The logger
+        // BORROWS the sink (no `#`), so the demo still owns it and reads
+        // the captured lines back — the test-assertion shape.
+        CapturingAppender cap = heap CapturingAppender();
+        Logger twin = heap Logger("orders.service", Level.INFO,
+            heap JsonlEncoder(), cap);
+        twin.info("service started");
+        twin.warn("queue depth above threshold");
+        twin.error("downstream refused connection");
+        twin.debug("below threshold - never emitted");
+        twin.trace("far below threshold - never emitted");
+        this.check(cap.count() == 3,
+            "INFO threshold keeps info/warn/error, drops debug and trace");
+        this.check(cap.get(0).contains("\"msg\":\"service started\"")
+            && cap.get(0).contains("\"level\":\"INFO\""),
+            "a facade line carries level, logger, msg as JSONL");
+
+        // Fielded records: the slow-request shape — route, latency, retry
+        // flag, and the p99 the alert fired on.
+        LogRecord slow = twin.event(Level.WARN, "slow request");
+        slow.str("route", "/checkout").i64("ms", 1200).flag("retried", true)
+            .f64("p99", 0.987);
+        twin.emit(#slow);
+        String line = cap.get(3);
+        System.stdout.println("  fielded: " + line);
+        this.check(line.contains("\"route\":\"/checkout\"")
+            && line.contains("\"ms\":1200")
+            && line.contains("\"retried\":true"),
+            "typed fields render into the JSONL record");
+        // The f64 field is present but its RENDERING is not asserted:
+        // 0.987 currently prints as 0.986999 (stdlib float64 formatting is
+        // not shortest-round-trip — cajeta INDEX: float64-tostring-roundtrip).
+        this.check(line.contains("\"p99\":"),
+            "f64 field present (rendering gated on float64-tostring-roundtrip)");
+
+        // enabled(): guard an expensive build. At INFO, the DEBUG branch
+        // must not even construct the record.
+        boolean built = false;
+        if (twin.enabled(Level.DEBUG)) {
+            LogRecord d = twin.event(Level.DEBUG, "expensive diagnostics");
+            d.i64("cache_entries", 123456);
+            twin.emit(#d);
+            built = true;
+        }
+        this.check(!built && twin.enabled(Level.WARN),
+            "enabled() gates the build: DEBUG false, WARN true at INFO");
+    }
+}

@@ -1,0 +1,35 @@
+package tour;
+
+import cajeta.lang.String;
+
+// Base class for every demo in the logging tour. Each demo extends DemoClass
+// and overrides execute() with worked, self-checking examples; the entry
+// points run one instance of each and turn any failed check() into a nonzero
+// exit — so the tour doubles as a smoke test.
+//
+// The narration convention is deliberate: demos PRINT real log lines to
+// stdout (a mixed stream of JSONL/text/logfmt is exactly what log consumers
+// see) and CHECK through CapturingAppender — lending a capturing sink to a
+// logger and reading the lines back is the library's own test-assertion
+// shape, so the checks teach it too.
+//
+// (Cajeta has no `abstract` keyword yet, so execute() lands as an empty
+// concrete method that every subclass overrides.)
+public class DemoClass {
+
+    public static int32 checks = 0;
+    public static int32 failures = 0;
+
+    public void execute() {
+    }
+
+    public void check(boolean cond, String what) {
+        DemoClass.checks = DemoClass.checks + 1;
+        if (cond) {
+            System.stdout.println("  ok   " + what);
+        } else {
+            DemoClass.failures = DemoClass.failures + 1;
+            System.stdout.println("  FAIL " + what);
+        }
+    }
+}

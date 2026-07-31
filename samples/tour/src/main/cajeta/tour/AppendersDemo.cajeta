@@ -1,0 +1,130 @@
+package tour;
+
+import dev.cajeta.logging.Level;
+import dev.cajeta.logging.Logger;
+import dev.cajeta.logging.JsonlEncoder;
+import dev.cajeta.logging.ConsoleAppender;
+import dev.cajeta.logging.CapturingAppender;
+import dev.cajeta.logging.CompositeAppender;
+import dev.cajeta.logging.FileAppender;
+import cajeta.io.file.File;
+import cajeta.io.file.FileReader;
+import cajeta.io.file.OpenMode;
+import cajeta.io.file.Path;
+
+// Appenders — where encoded lines GO:
+//
+//   ConsoleAppender     stdout (dev, container logs)
+//   FileAppender        a file through a streaming writer: APPEND for a
+//                       restart-safe service log, WRITE truncates; flushes
+//                       per line; close() releases the fd
+//   CapturingAppender   in-memory, for tests and this tour's checks
+//   CompositeAppender   fan-out: one emit -> every registered sink
+//
+// Ownership is the teaching point: a logger BORROWS an appender you keep
+// (capturing, file-you-will-close) and you SURRENDER (`#`) sinks you hand
+// over for good (composite children). FileAppender.close() is not optional
+// — copy a file demo without it and you leak the fd.
+//
+// The scenario: the orders service's audit log — console for the operator,
+// a JSONL file for the collector, restart-safe.
+public class AppendersDemo extends DemoClass {
+
+    // support: read a whole (small) file into a String.
+    static #String readAll(String path) {
+        FileReader r = File.openRead(path);
+        int8[] buf = heap int8[8192];
+        int32 total = 0;
+        boolean going = true;
+        while (going) {
+            int32 got = r.read(buf, 8192 - total);
+            if (got <= 0) {
+                going = false;
+            } else {
+                total = total + got;
+            }
+        }
+        r.close();
+        int8[] exact = heap int8[total];
+        int32 i = 0;
+        while (i < total) {
+            exact[i] = buf[i];
+            i = i + 1;
+        }
+        return heap String(#exact, total);
+    }
+
+    public void execute() {
+        System.stdout.println("");
+        System.stdout.println("-- Appenders: file lifecycle, console+file fan-out --");
+
+        String path = "tour-audit.jsonl";
+        // Hygiene: clear any stale run's file first (WRITE below also
+        // truncates, but a leftover from a crashed run should never
+        // confuse a reader of this demo).
+        Path stale = Path.of(path);
+        if (stale.exists()) {
+            stale.delete();
+        }
+
+        // 1. The file lifecycle: open WRITE (fresh log), emit, CLOSE —
+        //    close() flushes and releases the fd. The logger BORROWS the
+        //    appender precisely so the demo can still close it.
+        FileAppender first = heap FileAppender(path, OpenMode.WRITE);
+        Logger boot = heap Logger("orders.audit", Level.INFO,
+            heap JsonlEncoder(), first);
+        boot.info("audit log opened");
+        first.close();
+
+        // 2. Restart behavior: re-open the SAME path with APPEND — the
+        //    normal service mode. Existing lines survive; new ones append.
+        FileAppender second = heap FileAppender(path, OpenMode.APPEND);
+        Logger restarted = heap Logger("orders.audit", Level.INFO,
+            heap JsonlEncoder(), second);
+        restarted.info("service restarted");
+        second.close();
+        String content = AppendersDemo.readAll(path);
+        System.stdout.println("  " + path + " after restart:");
+        System.stdout.print(content);
+        this.check(content.contains("\"msg\":\"audit log opened\"")
+            && content.contains("\"msg\":\"service restarted\""),
+            "APPEND preserved the pre-restart line and added the new one");
+
+        // 3. Fan-out, the real shape: console for the operator AND the
+        //    file for the collector, one emit. Composite children are
+        //    SURRENDERED (`#`) — the composite owns them from here on
+        //    (their fds release when it drops at scope exit).
+        String fanPath = "tour-fanout.jsonl";
+        CompositeAppender both = heap CompositeAppender();
+        both.add(#heap ConsoleAppender())
+            .add(#heap FileAppender(fanPath, OpenMode.WRITE));
+        Logger fanned = heap Logger("orders.audit", Level.INFO,
+            heap JsonlEncoder(), #both);
+        fanned.warn("payment retries exhausted");
+        String fanContent = AppendersDemo.readAll(fanPath);
+        this.check(fanContent.contains("\"msg\":\"payment retries exhausted\""),
+            "the line above landed on the console AND in the file");
+
+        // 4. Failure surface, guarded. Typed IO exceptions are still
+        //    pending in the stdlib (File.openWrite has no throwing wrapper
+        //    yet), so today's idiom is guard-first: verify the target
+        //    directory exists before wiring a file sink.
+        Path badDir = Path.of("no-such-dir-for-tour");
+        this.check(!badDir.exists(),
+            "guard-first: probe the log directory before opening the sink");
+
+        // Cleanup: the audit files are scratch, not deliverables.
+        Path.of(path).delete();
+        Path.of(fanPath).delete();
+
+        // 5. CapturingAppender in its natural role — already used by every
+        //    demo's checks; here the surface itself: count()/get(i).
+        CapturingAppender cap = heap CapturingAppender();
+        Logger t = heap Logger("orders.audit", Level.INFO,
+            heap JsonlEncoder(), cap);
+        t.info("first");
+        t.info("second");
+        this.check(cap.count() == 2 && cap.get(1).contains("\"msg\":\"second\""),
+            "capturing: count() and get(i) read emitted lines back");
+    }
+}

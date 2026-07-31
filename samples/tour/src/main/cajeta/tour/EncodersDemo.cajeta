@@ -1,0 +1,70 @@
+package tour;
+
+import dev.cajeta.logging.Level;
+import dev.cajeta.logging.Logger;
+import dev.cajeta.logging.LogRecord;
+import dev.cajeta.logging.JsonlEncoder;
+import dev.cajeta.logging.TextEncoder;
+import dev.cajeta.logging.LogfmtEncoder;
+import dev.cajeta.logging.CapturingAppender;
+
+// The three built-in encoders — one record, three wire formats:
+//
+//   JsonlEncoder    {"ts":...,"level":"WARN","logger":...,"msg":...,...}
+//                   the collector/ingest format (one JSON object per line)
+//   TextEncoder     human-first: timestamp LEVEL logger  msg  k=v ...
+//   LogfmtEncoder   k=v pairs throughout — the Heroku/Grafana lineage
+//
+// An encoder renders; an appender ships. The same LogRecord shape flows
+// through all three, so switching a service's log format is a one-line
+// wiring change, not a call-site rewrite.
+//
+// The record is the realistic slow-request shape from FacadeDemo — the
+// point is seeing ONE real record in all three dialects.
+public class EncodersDemo extends DemoClass {
+
+    // support: the slow-request record, rebuilt per logger (emit consumes).
+    static void slowRequest(Logger log) {
+        LogRecord r = log.event(Level.WARN, "slow request");
+        r.str("route", "/checkout").i64("ms", 1200).flag("retried", true);
+        log.emit(#r);
+    }
+
+    public void execute() {
+        System.stdout.println("");
+        System.stdout.println("-- Encoders: one record as JSONL, text, and logfmt --");
+
+        CapturingAppender jl = heap CapturingAppender();
+        Logger asJsonl = heap Logger("orders.gw", Level.INFO,
+            heap JsonlEncoder(), jl);
+        EncodersDemo.slowRequest(asJsonl);
+        String jsonl = jl.get(0);
+        System.stdout.println("  jsonl : " + jsonl);
+        this.check(jsonl.contains("\"level\":\"WARN\"")
+            && jsonl.contains("\"route\":\"/checkout\"")
+            && jsonl.contains("\"ms\":1200"),
+            "JSONL: quoted keys, typed values, one object per line");
+
+        CapturingAppender tx = heap CapturingAppender();
+        Logger asText = heap Logger("orders.gw", Level.INFO,
+            heap TextEncoder(), tx);
+        EncodersDemo.slowRequest(asText);
+        String text = tx.get(0);
+        System.stdout.println("  text  : " + text);
+        this.check(text.contains("WARN") && text.contains("slow request")
+            && text.contains("route=/checkout"),
+            "text: level + message up front, fields as k=v tail");
+
+        CapturingAppender lf = heap CapturingAppender();
+        Logger asLogfmt = heap Logger("orders.gw", Level.INFO,
+            heap LogfmtEncoder(), lf);
+        EncodersDemo.slowRequest(asLogfmt);
+        String logfmt = lf.get(0);
+        System.stdout.println("  logfmt: " + logfmt);
+        this.check(logfmt.contains("level=warn")     // logfmt levels are lowercase
+            && logfmt.contains("msg=\"slow request\"")
+            && logfmt.contains("route=/checkout")
+            && logfmt.contains("ms=1200"),
+            "logfmt: everything is k=v (lowercase level, quoted msg)");
+    }
+}

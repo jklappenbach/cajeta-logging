@@ -1,0 +1,74 @@
+package tour;
+
+import dev.cajeta.logging.Level;
+import dev.cajeta.logging.Levels;
+import dev.cajeta.logging.Log;
+import dev.cajeta.logging.Logger;
+import dev.cajeta.logging.JsonlEncoder;
+import dev.cajeta.logging.CapturingAppender;
+
+// The level vocabulary — all six values and the machinery around them:
+//
+//   TRACE < DEBUG < INFO < WARN < ERROR < OFF
+//
+// cajeta enums are bare (== comparison only), so ranking and display names
+// live in Levels: severity() is the rank threshold gating compares, name()
+// is what encoders print. OFF is the DISABLE SENTINEL — a logger gated at
+// OFF emits nothing, ever; no record outranks it.
+//
+// The scenario: the same module logged at three operational settings —
+// debugging an incident (TRACE), normal service (INFO), silenced (OFF).
+public class LevelsDemo extends DemoClass {
+
+    // support: emit one line per level below OFF; return how many landed.
+    static int32 emitAll(Logger log) {
+        log.trace("resolver cache probe");
+        log.debug("resolver cache miss");
+        log.info("request served");
+        log.warn("retry scheduled");
+        log.error("upstream 502");
+        return 5;
+    }
+
+    public void execute() {
+        System.stdout.println("");
+        System.stdout.println("-- Levels: the six-value vocabulary, severity ranks, OFF --");
+
+        // 1. The rank order is the gating order.
+        this.check(Levels.severity(Level.TRACE) == 0
+            && Levels.severity(Level.DEBUG) == 1
+            && Levels.severity(Level.INFO) == 2
+            && Levels.severity(Level.WARN) == 3
+            && Levels.severity(Level.ERROR) == 4
+            && Levels.severity(Level.OFF) == 5,
+            "severity ranks: TRACE 0 .. ERROR 4, OFF 5");
+        this.check(Levels.name(Level.TRACE).equals("TRACE")
+            && Levels.name(Level.OFF).equals("OFF"),
+            "Levels.name supplies the encoder display names");
+
+        // 2. The same five emissions at three thresholds. TRACE keeps all
+        //    five (incident debugging); INFO keeps three (normal service);
+        //    OFF keeps none (silenced — the disable sentinel).
+        CapturingAppender all = heap CapturingAppender();
+        Logger verbose = heap Logger("orders.resolver", Level.TRACE,
+            heap JsonlEncoder(), all);
+        LevelsDemo.emitAll(verbose);
+        this.check(all.count() == 5, "TRACE threshold keeps all five tiers");
+
+        CapturingAppender ops = heap CapturingAppender();
+        Logger normal = heap Logger("orders.resolver", Level.INFO,
+            heap JsonlEncoder(), ops);
+        LevelsDemo.emitAll(normal);
+        this.check(ops.count() == 3, "INFO threshold keeps info/warn/error");
+
+        CapturingAppender none = heap CapturingAppender();
+        Logger silenced = heap Logger("orders.resolver", Level.OFF,
+            heap JsonlEncoder(), none);
+        LevelsDemo.emitAll(silenced);
+        this.check(none.count() == 0 && !silenced.enabled(Level.ERROR),
+            "OFF drops everything — even ERROR probes as disabled");
+
+        System.stdout.println("  the same 5 emissions: TRACE kept " + all.count()
+            + ", INFO kept " + ops.count() + ", OFF kept " + none.count());
+    }
+}

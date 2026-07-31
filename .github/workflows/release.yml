@@ -19,11 +19,14 @@ jobs:
     with:
       # Pin explicitly. Omitting this inherits the reusable workflow's default —
       # which is how cajeta-unit silently built against v0.7.1 for a month.
-      cajeta-version: v0.10.1
-      # run-tests.sh compiles the library + test sources together under
-      # --profile=test (the DI graph must resolve in the final binary) and
-      # resolves cajeta-unit itself: sibling checkout when present, else a
-      # sha256-verified fetch from Olla at the version pinned in cajeta.json's
-      # dev-dependencies. On a bare runner it takes the fetch path.
-      test-command: ./run-tests.sh
+      # Raised to v0.12.1 with the unit-6 tour rewrite: the expanded tour is
+      # authored and verified against the 0.12 line.
+      cajeta-version: v0.12.1
+      # Suite + tour (all three DI profiles) + tour-coverage gate, chained in
+      # scripts/ci-checks.sh. run-tests.sh compiles the library + test sources
+      # together under --profile=test (the DI graph must resolve in the final
+      # binary) and resolves cajeta-unit itself: sibling checkout when present,
+      # else a sha256-verified fetch from Olla at the version pinned in
+      # cajeta.json's dev-dependencies. On a bare runner it takes the fetch path.
+      test-command: ./scripts/ci-checks.sh
     secrets: inherit

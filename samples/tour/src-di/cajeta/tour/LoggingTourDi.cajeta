@@ -1,14 +1,32 @@
 package tour;
 
 import dev.cajeta.logging.Level;
+import dev.cajeta.logging.Logger;
 import dev.cajeta.logging.LogRecord;
+import dev.cajeta.logging.LoggerFactory;
 
 /**
- * A service carrying `@Logged` — the compiler synthesizes
- * `static Logger log = Log.defaultFor("tour.CheckoutService")`, so `log` is
- * never declared here. Routed through the DI-wired LoggerFactory: the encoder
- * and appender are the profile-selected singletons (dev → text/console,
- * prod → JSONL/file, test → capturing).
+ * The DI half — a small service logged the way a real deployment wires it:
+ *
+ *   `@Logged`        the compiler synthesizes
+ *                    `static Logger log = Log.defaultFor("<pkg>.<Class>")`
+ *                    on the class — no logger declaration in user code.
+ *   `LoggerFactory`  the DI singleton behind Log.defaultFor: it holds the
+ *                    PROFILE-SELECTED encoder + appender, and loggerFor()
+ *                    hands out per-module loggers that borrow them — one
+ *                    sink pair for the whole process, test-overridable.
+ *
+ * Profiles (chosen at compile time by run.sh's PROFILE):
+ *   dev  -> TextEncoder + ConsoleAppender   (lines appear below as text)
+ *   prod -> JsonlEncoder + FileAppender     (lines land in ./app.jsonl)
+ *   test -> JsonlEncoder + CapturingAppender (lines are captured, NOT
+ *           printed — the masking sink tests assert through)
+ * run.sh prints which profile is active and verifies where the output
+ * went, so nothing "vanishes" silently.
+ *
+ * Lives in src-di because compile-time DI resolves the graph in the FINAL
+ * binary: the manifest build against the published `.cja` must not include
+ * this file (its wiring would be frozen at the archive's build profile).
  */
 @Logged
 class CheckoutService {
@@ -27,24 +45,65 @@ class CheckoutService {
     }
 }
 
-/**
- * run.sh's entry: sections 1–7 plus the `@Logged`/DI section. Lives in this
- * separate source root (src-di) because compile-time DI needs the LIBRARY
- * SOURCES in the same compile — the manifest build against the published
- * `.cja` must not include this file (its wiring would be frozen at the
- * archive's build profile).
- */
+@Logged
+class InventoryService {
+    public InventoryService() {
+        return;
+    }
+
+    public void reserve(String sku, int64 units) {
+        LogRecord r = log.event(Level.INFO, "stock reserved");
+        r.str("sku", sku).i64("units", units);
+        log.emit(#r);
+    }
+
+    public String loggerName() {
+        return log.name;
+    }
+}
+
 public final class LoggingTourDi {
 
     public static int32 run() {
+        System.stdout.println("=== cajeta-logging tour (full: demos + DI service scenario) ===");
         LoggingTour.sections();
 
-        System.stdout.println("=== 8. @Logged + DI: the synthesized, profile-wired logger ===");
-        CheckoutService svc = heap CheckoutService();
-        System.stdout.println("synthesized logger name: " + svc.loggerName());
-        svc.pay("/checkout", 42);
+        System.stdout.println("");
+        System.stdout.println("-- @Logged + LoggerFactory: the DI-wired service scenario --");
+        DemoClass d = heap DemoClass();
 
-        System.stdout.println("=== tour complete ===");
-        return 0;
+        // 1. @Logged synthesis: each service class carries its own logger,
+        //    named after the class, wired through the DI singletons.
+        CheckoutService checkout = heap CheckoutService();
+        InventoryService inventory = heap InventoryService();
+        System.stdout.println("  synthesized loggers: " + checkout.loggerName()
+            + ", " + inventory.loggerName());
+        d.check(checkout.loggerName().equals("tour.CheckoutService")
+            && inventory.loggerName().equals("tour.InventoryService"),
+            "@Logged synthesizes a per-class logger, named for the class");
+
+        // 2. One request end to end, two modules (where the lines land is
+        //    profile-dependent — run.sh verifies the destination).
+        checkout.pay("/checkout", 42);
+        inventory.reserve("SKU-7741", 3);
+
+        // 3. Per-module loggers from the SAME factory at DIFFERENT
+        //    thresholds — the "chatty module quieted in prod" shape. Both
+        //    borrow the one profile-selected encoder/appender pair.
+        Logger gw = LoggerFactory.__cajeta_inject()
+            .loggerFor("orders.gateway", Level.INFO);
+        Logger noisy = LoggerFactory.__cajeta_inject()
+            .loggerFor("orders.resolver", Level.WARN);
+        d.check(gw.enabled(Level.INFO) && !noisy.enabled(Level.INFO)
+            && noisy.enabled(Level.WARN),
+            "one factory, per-module thresholds: gateway INFO, resolver WARN");
+        gw.info("request routed");
+        noisy.info("cache probe (dropped by the WARN threshold)");
+        noisy.warn("cache miss rate high");
+
+        System.stdout.println("");
+        System.stdout.println("=== tour: " + DemoClass.checks + " checks, "
+            + DemoClass.failures + " failures ===");
+        return DemoClass.failures;
     }
 }
