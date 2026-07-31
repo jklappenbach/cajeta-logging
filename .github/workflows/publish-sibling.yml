@@ -30,7 +30,7 @@ on:
       cajeta-version:
         description: 'Toolchain release to build with'
         required: true
-        default: 'v0.11.0'
+        default: 'v0.12.0'
 
 permissions:
   contents: read
