@@ -1,3 +1,8 @@
 # Cajeta build outputs
 /build/
 *.cja
+
+# Compiler cache — bitcode and prebuilt archives, regenerated on every build.
+# Never source. Committed cache also risks feeding a stale artifact to a
+# different toolchain than the one that produced it.
+**/.cajeta/cache/
