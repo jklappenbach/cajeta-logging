@@ -48,7 +48,7 @@ public final class Logger {
     /** Encode + append the record if at/above threshold; consumes the record. */
     public void emit(#LogRecord r) {
         if (Levels.severity(r.level) >= Levels.severity(this.threshold)) {
-            int8[] bytes = this.encoder.encode(r);
+            int8[] bytes #= this.encoder.encode(r);
             this.appender.append(#bytes);
         }
     }

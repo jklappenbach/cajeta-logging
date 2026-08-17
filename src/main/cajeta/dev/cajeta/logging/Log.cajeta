@@ -36,11 +36,11 @@ public final class Log {
      * and verifies the DEBUG line is gated out.
      */
     public static void demo() {
-        Logger log = Log.console("demo", Level.INFO);
+        Logger log #= Log.console("demo", Level.INFO);
 
         log.info("service started");
 
-        LogRecord r = log.event(Level.WARN, "slow request");
+        LogRecord r #= log.event(Level.WARN, "slow request");
         r.str("route", "/checkout").i64("ms", 1200).flag("retried", true);
         log.emit(#r);
 

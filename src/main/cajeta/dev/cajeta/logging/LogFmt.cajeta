@@ -30,25 +30,38 @@ final class LogFmt {
         return v.isEmpty() || v.contains(" ") || v.contains("\"") || v.contains("=");
     }
 
-    /** `v` as a token: quoted + `\`/`"`-escaped when needed, else a bare copy. */
-    static String quote(String v) {
+    /**
+     * `v` as a token: quoted + `\`/`"`-escaped when needed, else a bare copy.
+     *
+     * `#String` (spec §2.8): BOTH returns build a fresh String — the quoted
+     * branch concatenates, and the bare branch is written `"" + v` precisely so
+     * it copies rather than aliasing the caller's `v`. A plain `String` return
+     * spelled a view over something this method never views.
+     */
+    static #String quote(String v) {
         if (LogFmt.needsQuote(v)) {
-            String slashes = v.replace("\\", "\\\\");
-            String esc = slashes.replace("\"", "\\\"");
-            return "\"" + esc + "\"";
+            String slashes #= v.replace("\\", "\\\\");
+            String esc #= slashes.replace("\"", "\\\"");
+            return #("\"" + esc + "\"");
         }
-        return "" + v;
+        return #("" + v);
     }
 
-    /** A field's value rendered for `k=v`: strings quoted, scalars bare. */
-    static String fieldValue(LogField f) {
+    /**
+     * A field's value rendered for `k=v`: strings quoted, scalars bare.
+     *
+     * `#String` for the same reason as `quote`: the three scalar branches
+     * materialize via `toString()` and the string branch rides `quote`, which
+     * now says so.
+     */
+    static #String fieldValue(LogField f) {
         if (f.kind == 0) {
-            return LogFmt.quote(f.sval);
+            return #LogFmt.quote(f.sval);
         } else if (f.kind == 1) {
-            return Int64.of(f.ival).toString();
+            return #Int64.of(f.ival).toString();
         } else if (f.kind == 2) {
-            return Boolean.of(f.bval).toString();
+            return #Boolean.of(f.bval).toString();
         }
-        return Float64.of(f.fval).toString();
+        return #Float64.of(f.fval).toString();
     }
 }
