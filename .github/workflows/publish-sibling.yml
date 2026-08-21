@@ -106,12 +106,29 @@ jobs:
             prefix="${{ inputs.subdir }}/"
           fi
           echo "cja=${prefix}${cja}" >> "$GITHUB_OUTPUT"
+          echo "manifest=${prefix}cajeta.json" >> "$GITHUB_OUTPUT"
+          # A subdirectory package may have no README of its own; fall back to
+          # the repo root's rather than failing the publish over a listing blurb.
+          if [ -f "README.md" ]; then
+            echo "readme=${prefix}README.md" >> "$GITHUB_OUTPUT"
+          else
+            echo "readme=README.md" >> "$GITHUB_OUTPUT"
+          fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "publishing ${NAME}@${VERSION} from ${prefix:-./} (cja=${prefix}${cja})"
 
       - name: Publish to Olla (this repo's credentials)
         uses: jklappenbach/cajeta/.github/actions/olla-publish@main
         with:
           cja-path: ${{ steps.build.outputs.cja }}
+          # The PACKAGE NAME comes from this manifest, not from the .cja —
+          # olla-publish.mjs reads details.name out of it. Defaulting to the
+          # repo root while building a subdirectory package publishes the right
+          # bytes under the WRONG NAME, silently and with a success exit: on
+          # 2026-08-21 that put dev.cajeta.coverage's archive on the registry as
+          # dev.cajeta.coco@0.5.0. Both of these must follow `subdir`.
+          manifest-path: ${{ steps.build.outputs.manifest }}
+          readme-path: ${{ steps.build.outputs.readme }}
           version: ${{ steps.build.outputs.version }}
           token: ${{ secrets.OLLA_TOKEN }}
           signing-key-pem: ${{ secrets.OLLA_SIGNING_KEY_PEM }}
