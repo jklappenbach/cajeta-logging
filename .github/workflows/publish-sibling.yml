@@ -31,6 +31,14 @@ on:
         description: 'Toolchain release to build with'
         required: true
         default: 'v0.13.0'
+      subdir:
+        description: >
+          Directory holding the package manifest, relative to the sibling's
+          root. Default "." is the repo root. Needed by repos that ship more
+          than one package: cajeta-coco has dev.cajeta.coco at the root and
+          dev.cajeta.coverage under plugin/, and each is published separately.
+        required: false
+        default: '.'
 
 permissions:
   contents: read
@@ -58,20 +66,35 @@ jobs:
 
       - name: Build the .cja and assert the tag matches the manifest
         id: build
+        working-directory: ${{ inputs.subdir }}
         run: |
           set -euo pipefail
           VERSION="$(cajeta info | awk '/^[[:space:]]*version:/{print $2; exit}')"
           [ -n "$VERSION" ] || { echo "::error::no version from cajeta info"; exit 1; }
+          # Everything after the LAST `v`, so a one-package repo tags `v0.2.2`
+          # and a multi-package repo can namespace its tags — `coverage-v0.5.0`
+          # — without the two colliding. The assertion is the point of this
+          # step: it is what stops a tag publishing a different version than it
+          # names, which no signature would catch.
           tag_version="${{ inputs.ref }}"
-          tag_version="${tag_version#v}"
+          tag_version="${tag_version##*v}"
           if [ "$tag_version" != "$VERSION" ]; then
-            echo "::error::ref ${{ inputs.ref }} disagrees with manifest version ${VERSION}" >&2
+            echo "::error::ref ${{ inputs.ref }} disagrees with ${{ inputs.subdir }} manifest version ${VERSION}" >&2
             exit 1
           fi
           cajeta build
           cja="$(ls build/archive/*.cja | head -1)"
           [ -f "$cja" ] || { echo "::error::no .cja built"; exit 1; }
-          echo "cja=$cja" >> "$GITHUB_OUTPUT"
+          # Paths in outputs are consumed by a step that does NOT inherit this
+          # working-directory, so make it repo-root relative.
+          # An `if`, not `[ ... ] && ...`: under `set -e` a false test makes
+          # the AND-list return 1 and kills the step, which would fail every
+          # root-directory publish this workflow was written for.
+          prefix=""
+          if [ "${{ inputs.subdir }}" != "." ]; then
+            prefix="${{ inputs.subdir }}/"
+          fi
+          echo "cja=${prefix}${cja}" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Publish to Olla (this repo's credentials)
