@@ -83,8 +83,19 @@ jobs:
             exit 1
           fi
           cajeta build
-          cja="$(ls build/archive/*.cja | head -1)"
-          [ -f "$cja" ] || { echo "::error::no .cja built"; exit 1; }
+          # Address the artifact by NAME-VERSION, not `ls | head -1`. The glob
+          # is only unambiguous while build/ is pristine; a build dir carrying
+          # earlier cuts (cajeta-coco's plugin/ has six locally) sorts an old
+          # one first, and the publish step would then upload those bytes under
+          # this version — the exact substitution the tag assertion above
+          # exists to prevent, arriving one line later.
+          NAME="$(cajeta info | awk '/^[[:space:]]*name:/{print $2; exit}')"
+          [ -n "$NAME" ] || { echo "::error::no name from cajeta info"; exit 1; }
+          cja="build/archive/${NAME}-${VERSION}.cja"
+          if [ ! -f "$cja" ]; then
+            echo "::error::expected ${cja}; build/archive holds: $(ls build/archive 2>/dev/null | tr '\n' ' ')" >&2
+            exit 1
+          fi
           # Paths in outputs are consumed by a step that does NOT inherit this
           # working-directory, so make it repo-root relative.
           # An `if`, not `[ ... ] && ...`: under `set -e` a false test makes
