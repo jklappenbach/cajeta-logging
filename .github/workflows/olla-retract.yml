@@ -1,0 +1,94 @@
+# Retract a package version from Olla using THIS repo's OLLA_TOKEN.
+#
+# Companion to publish-sibling.yml, and deliberately a SEPARATE workflow: the
+# destructive verb should not be an input to the constructive one, where a
+# mis-set flag could retract instead of publish.
+#
+# Why it exists: on 2026-08-21 a subdir bug in publish-sibling published
+# dev.cajeta.coverage's archive under the name dev.cajeta.coco@0.5.0. The bytes
+# are wrong for that name, the entry resolves as coco's latest, and nothing
+# client-side can detect it. Retraction is the only way to stop it resolving,
+# and the token lives here.
+#
+# It does NOT swallow failures. publish-sibling's action treats HTTP 409 as
+# success ("already published"), which is right for an idempotent publish and
+# would be very wrong here: a retract that quietly did nothing would read as
+# done while the bad artifact kept serving.
+
+name: olla-retract
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Package name (e.g. dev.cajeta.coco)'
+        required: true
+      version:
+        description: 'Version to retract (e.g. 0.5.0)'
+        required: true
+      reason:
+        description: 'Why — recorded by the registry and shown to consumers'
+        required: true
+      dry-run:
+        description: 'Resolve and print the target, then stop without retracting'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  retract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show what is about to be retracted
+        run: |
+          set -euo pipefail
+          echo "target: ${{ inputs.name }}@${{ inputs.version }}"
+          # Print the CURRENT registry state first. A retraction aimed at the
+          # wrong version is not recoverable by re-running with different
+          # inputs, so the operator sees the bytes they are about to withdraw.
+          curl -sS "https://olla.cajeta.dev/v2/resolve?name=${{ inputs.name }}&version=${{ inputs.version }}" \
+            || { echo "::error::cannot resolve ${{ inputs.name }}@${{ inputs.version }} — nothing to retract"; exit 1; }
+          echo
+
+      - name: Retract
+        if: ${{ inputs.dry-run == false }}
+        env:
+          OLLA_TOKEN: ${{ secrets.OLLA_TOKEN }}
+        run: |
+          set -euo pipefail
+          [ -n "${OLLA_TOKEN:-}" ] || { echo "::error::OLLA_TOKEN is empty in this repo"; exit 1; }
+          body="$(jq -nc \
+            --arg n '${{ inputs.name }}' \
+            --arg v '${{ inputs.version }}' \
+            --arg r '${{ inputs.reason }}' \
+            '{name:$n, version:$v, reason:$r}')"
+          code="$(curl -sS -o /tmp/retract.out -w '%{http_code}' \
+            -X POST "https://olla.cajeta.dev/v2/retract" \
+            -H "Authorization: Bearer ${OLLA_TOKEN}" \
+            -H 'Content-Type: application/json' \
+            --data "$body")"
+          echo "HTTP $code"
+          cat /tmp/retract.out; echo
+          # Any non-2xx fails the job. A 4xx here is the SAFE outcome of a
+          # wrong request shape — nothing was withdrawn — and it carries the
+          # server's own message about what it wanted instead.
+          case "$code" in
+            2*) ;;
+            *) echo "::error::retract failed (HTTP $code) — nothing was retracted"; exit 1 ;;
+          esac
+
+      - name: Confirm the registry now reports it retracted
+        if: ${{ inputs.dry-run == false }}
+        run: |
+          set -euo pipefail
+          out="$(curl -sS "https://olla.cajeta.dev/v2/resolve?name=${{ inputs.name }}&version=${{ inputs.version }}" || true)"
+          echo "$out"
+          # Assert the outcome rather than trusting the 2xx: the whole reason
+          # this workflow exists is a step that reported success without
+          # changing anything.
+          echo "$out" | jq -e '.retracted == true' >/dev/null \
+            || { echo "::error::registry still reports retracted != true"; exit 1; }
+          echo "retracted: ${{ inputs.name }}@${{ inputs.version }}"
