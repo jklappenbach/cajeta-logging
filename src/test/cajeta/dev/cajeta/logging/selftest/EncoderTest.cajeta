@@ -21,13 +21,13 @@ public class EncoderTest {
 
     // Render `record` through `enc` and return the line as a String.
     static #String render(TextEncoder enc, LogRecord rec) {
-        int8[] bytes = enc.encode(rec);
+        int8[] bytes #= enc.encode(rec);
         int32 n = (int32) bytes.count();
         return heap String(#bytes, n);
     }
 
     static #String renderLogfmt(LogfmtEncoder enc, LogRecord rec) {
-        int8[] bytes = enc.encode(rec);
+        int8[] bytes #= enc.encode(rec);
         int32 n = (int32) bytes.count();
         return heap String(#bytes, n);
     }
@@ -39,7 +39,7 @@ public class EncoderTest {
         LogRecord r = heap LogRecord(0, Level.INFO, "order", "order placed");
         r.str("id", "o_42").i64("amount", 1999);
         TextEncoder enc = heap TextEncoder();
-        String line = EncoderTest.render(enc, r);
+        String line #= EncoderTest.render(enc, r);
         Assert.that(line).contains("INFO ");          // padded to width 5
         Assert.that(line).contains("order placed");    // msg emitted raw
         Assert.that(line).contains("id=o_42");
@@ -52,7 +52,7 @@ public class EncoderTest {
         LogRecord r = heap LogRecord(0, Level.WARN, "svc", "slow");
         r.str("note", "needs review");
         TextEncoder enc = heap TextEncoder();
-        String line = EncoderTest.render(enc, r);
+        String line #= EncoderTest.render(enc, r);
         Assert.that(line).contains("note=\"needs review\"");
         return;
     }
@@ -61,7 +61,7 @@ public class EncoderTest {
     public void textPadsShortLevels() {
         LogRecord r = heap LogRecord(0, Level.WARN, "svc", "hi");
         TextEncoder enc = heap TextEncoder();
-        String line = EncoderTest.render(enc, r);
+        String line #= EncoderTest.render(enc, r);
         // WARN (4) pads to "WARN " then a single separator space → "WARN  ".
         Assert.that(line).contains("WARN  ");
         return;
@@ -74,7 +74,7 @@ public class EncoderTest {
         LogRecord r = heap LogRecord(0, Level.WARN, "order", "order placed");
         r.str("id", "o_42").flag("ok", true);
         LogfmtEncoder enc = heap LogfmtEncoder();
-        String line = EncoderTest.renderLogfmt(enc, r);
+        String line #= EncoderTest.renderLogfmt(enc, r);
         Assert.that(line).startsWith("ts=");
         Assert.that(line).contains("level=warn");           // lower-cased
         Assert.that(line).contains("logger=order");
@@ -89,7 +89,7 @@ public class EncoderTest {
         LogRecord r = heap LogRecord(0, Level.INFO, "svc", "m");
         r.str("path", "a\"b");
         LogfmtEncoder enc = heap LogfmtEncoder();
-        String line = EncoderTest.renderLogfmt(enc, r);
+        String line #= EncoderTest.renderLogfmt(enc, r);
         // value a"b → quoted + escaped: path="a\"b"
         Assert.that(line).contains("path=\"a\\\"b\"");
         return;

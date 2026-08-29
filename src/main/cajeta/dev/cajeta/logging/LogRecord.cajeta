@@ -9,7 +9,7 @@ import cajeta.collection.ArrayList;
  * concrete-class fluent style `JsonWriter` uses):
  *
  * ```cajeta
- * LogRecord r = log.event(Level.WARN, "slow request");
+ * LogRecord r #= log.event(Level.WARN, "slow request");
  * r.str("route", "/checkout").i64("ms", 1200).flag("retried", true);
  * log.emit(#r);
  * ```

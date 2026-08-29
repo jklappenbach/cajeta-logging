@@ -9,7 +9,7 @@ import cajeta.time.Clock;
  * ```cajeta
  * log.info("service started");                 // convenience, no fields
  *
- * LogRecord r = log.event(Level.WARN, "slow");  // fielded
+ * LogRecord r #= log.event(Level.WARN, "slow");  // fielded
  * r.str("route", "/checkout").i64("ms", 1200);
  * log.emit(#r);
  * ```

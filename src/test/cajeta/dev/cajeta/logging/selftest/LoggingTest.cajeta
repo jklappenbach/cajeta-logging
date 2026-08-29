@@ -25,7 +25,7 @@ public class LoggingTest {
     public void infoLineIsCapturedAsJsonl() {
         CapturingAppender cap = CapturingAppender.__cajeta_inject();
         int32 before = cap.count();
-        Logger log = LoggerFactory.__cajeta_inject().loggerFor("svc", Level.INFO);
+        Logger log #= LoggerFactory.__cajeta_inject().loggerFor("svc", Level.INFO);
         log.info("service started");
         Assert.that(cap.count()).isEqualTo(before + 1);
         String line = cap.get(cap.count() - 1);
@@ -39,7 +39,7 @@ public class LoggingTest {
     public void belowThresholdIsGatedOut() {
         CapturingAppender cap = CapturingAppender.__cajeta_inject();
         int32 before = cap.count();
-        Logger log = LoggerFactory.__cajeta_inject().loggerFor("svc", Level.WARN);
+        Logger log #= LoggerFactory.__cajeta_inject().loggerFor("svc", Level.WARN);
         log.info("not severe enough");
         Assert.that(cap.count()).isEqualTo(before);
         log.warn("now we are talking");
@@ -51,8 +51,8 @@ public class LoggingTest {
     public void fieldsRenderAfterReservedKeys() {
         CapturingAppender cap = CapturingAppender.__cajeta_inject();
         int32 before = cap.count();
-        Logger log = LoggerFactory.__cajeta_inject().loggerFor("svc", Level.INFO);
-        LogRecord r = log.event(Level.WARN, "slow request");
+        Logger log #= LoggerFactory.__cajeta_inject().loggerFor("svc", Level.INFO);
+        LogRecord r #= log.event(Level.WARN, "slow request");
         r.str("route", "/checkout");
         r.i64("ms", 1200);
         r.flag("retried", true);

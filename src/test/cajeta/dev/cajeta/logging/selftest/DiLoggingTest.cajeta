@@ -23,7 +23,7 @@ public class DiLoggingTest {
     public void factoryLoggerCapturesViaTestComponent() {
         CapturingAppender cap = CapturingAppender.__cajeta_inject();
         int32 before = cap.count();
-        Logger log = LoggerFactory.__cajeta_inject().loggerFor("svc", Level.INFO);
+        Logger log #= LoggerFactory.__cajeta_inject().loggerFor("svc", Level.INFO);
         log.info("di wired hello");
         Assert.that(cap.count()).isEqualTo(before + 1);
         Assert.that(cap.get(cap.count() - 1)).contains("\"msg\":\"di wired hello\"");
@@ -34,7 +34,7 @@ public class DiLoggingTest {
     public void factoryLoggerRespectsThreshold() {
         CapturingAppender cap = CapturingAppender.__cajeta_inject();
         int32 before = cap.count();
-        Logger log = LoggerFactory.__cajeta_inject().loggerFor("svc", Level.WARN);
+        Logger log #= LoggerFactory.__cajeta_inject().loggerFor("svc", Level.WARN);
         log.info("below threshold");
         Assert.that(cap.count()).isEqualTo(before);
         log.warn("at threshold");
