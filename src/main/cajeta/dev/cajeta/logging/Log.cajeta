@@ -22,7 +22,28 @@ public final class Log {
      * test→capturing) and the logger borrows those shared sinks.
      */
     public static #Logger defaultFor(String name) {
-        return LoggerFactory.__cajeta_inject().loggerFor(name, Level.INFO);
+        return Log.at(name, Level.INFO);
+    }
+
+    /**
+     * A logger named `name` gated at `threshold`, sharing the process's DI
+     * sinks — the same encoder and appender behind every other logger.
+     *
+     * This is `defaultFor` without the INFO assumption, and it exists so
+     * that streams AGGREGATE. `console` builds a FRESH `ConsoleAppender`
+     * per call, so two components each calling it get two independent
+     * appenders that merely happen to both reach the console; configure a
+     * file sink later and only one of them follows. Anything wanting its
+     * records merged into the host application's single stream has to come
+     * through the factory.
+     *
+     * Diagnostics are the motivating case and they sit BELOW info: the
+     * cajeta-llm engine's `DiagSink` lines are DEBUG route-selection
+     * detail, and cabra aggregates them with its own logs rather than
+     * running a second stream beside them (Julian, 2026-08-30).
+     */
+    public static #Logger at(String name, Level threshold) {
+        return LoggerFactory.__cajeta_inject().loggerFor(name, threshold);
     }
 
     /** A logger that captures encoded lines in-memory (for tests). */
