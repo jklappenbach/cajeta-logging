@@ -62,7 +62,7 @@ public class AppendersDemo extends DemoClass {
         // Hygiene: clear any stale run's file first (WRITE below also
         // truncates, but a leftover from a crashed run should never
         // confuse a reader of this demo).
-        Path stale = Path.of(path);
+        Path stale #= Path.of(path);
         if (stale.exists()) {
             stale.delete();
         }
@@ -109,7 +109,7 @@ public class AppendersDemo extends DemoClass {
         //    pending in the stdlib (File.openWrite has no throwing wrapper
         //    yet), so today's idiom is guard-first: verify the target
         //    directory exists before wiring a file sink.
-        Path badDir = Path.of("no-such-dir-for-tour");
+        Path badDir #= Path.of("no-such-dir-for-tour");
         this.check(!badDir.exists(),
             "guard-first: probe the log directory before opening the sink");
 
