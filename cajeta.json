@@ -37,7 +37,7 @@
         // starter's `cajeta.testkit` placeholder named a package that exists in
         // no repository and is gone.
         "dev-dependencies": {
-            "dev.cajeta.unit": "0.2.0"
+            "dev.cajeta.unit": "0.2.4"
         },
 
         "repositories": [
