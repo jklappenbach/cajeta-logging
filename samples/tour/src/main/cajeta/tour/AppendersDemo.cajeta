@@ -32,7 +32,7 @@ public class AppendersDemo extends DemoClass {
 
     // support: read a whole (small) file into a String.
     static #String readAll(String path) {
-        FileReader r = File.openRead(path);
+        FileReader r #= File.openRead(path);
         int8[] buf = heap int8[8192];
         int32 total = 0;
         boolean going = true;
@@ -70,7 +70,7 @@ public class AppendersDemo extends DemoClass {
         // 1. The file lifecycle: open WRITE (fresh log), emit, CLOSE —
         //    close() flushes and releases the fd. The logger BORROWS the
         //    appender precisely so the demo can still close it.
-        FileAppender first = heap FileAppender(path, OpenMode.WRITE);
+        FileAppender first #= heap FileAppender(path, OpenMode.WRITE);
         Logger boot = heap Logger("orders.audit", Level.INFO,
             heap JsonlEncoder(), first);
         boot.info("audit log opened");
@@ -78,12 +78,12 @@ public class AppendersDemo extends DemoClass {
 
         // 2. Restart behavior: re-open the SAME path with APPEND — the
         //    normal service mode. Existing lines survive; new ones append.
-        FileAppender second = heap FileAppender(path, OpenMode.APPEND);
+        FileAppender second #= heap FileAppender(path, OpenMode.APPEND);
         Logger restarted = heap Logger("orders.audit", Level.INFO,
             heap JsonlEncoder(), second);
         restarted.info("service restarted");
         second.close();
-        String content = AppendersDemo.readAll(path);
+        String content #= AppendersDemo.readAll(path);
         System.stdout.println("  " + path + " after restart:");
         System.stdout.print(content);
         this.check(content.contains("\"msg\":\"audit log opened\"")
@@ -101,7 +101,7 @@ public class AppendersDemo extends DemoClass {
         Logger fanned = heap Logger("orders.audit", Level.INFO,
             heap JsonlEncoder(), #both);
         fanned.warn("payment retries exhausted");
-        String fanContent = AppendersDemo.readAll(fanPath);
+        String fanContent #= AppendersDemo.readAll(fanPath);
         this.check(fanContent.contains("\"msg\":\"payment retries exhausted\""),
             "the line above landed on the console AND in the file");
 

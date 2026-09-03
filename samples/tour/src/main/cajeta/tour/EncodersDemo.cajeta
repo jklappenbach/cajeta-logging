@@ -25,7 +25,7 @@ public class EncodersDemo extends DemoClass {
 
     // support: the slow-request record, rebuilt per logger (emit consumes).
     static void slowRequest(Logger log) {
-        LogRecord r = log.event(Level.WARN, "slow request");
+        LogRecord r #= log.event(Level.WARN, "slow request");
         r.str("route", "/checkout").i64("ms", 1200).flag("retried", true);
         log.emit(#r);
     }

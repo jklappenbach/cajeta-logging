@@ -48,7 +48,7 @@ class TsvEncoder implements LogEncoder {
             }
             i = i + 1;
         }
-        int8[] bytes = line.toBytes();
+        int8[] bytes #= line.toBytes();
         return #bytes;
     }
 }
@@ -106,7 +106,7 @@ public class ExtensionDemo extends DemoClass {
         log.info("job 2 picked up");
         log.info("job 3 picked up");
         log.warn("job 4 slow");
-        LogRecord fail = log.event(Level.ERROR, "job 5 failed");
+        LogRecord fail #= log.event(Level.ERROR, "job 5 failed");
         fail.str("queue", "payments").i64("attempt", 3).flag("fatal", true);
         log.emit(#fail);
 

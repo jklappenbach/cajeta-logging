@@ -35,7 +35,7 @@ class CheckoutService {
     }
 
     public void pay(String route, int64 ms) {
-        LogRecord r = log.event(Level.INFO, "payment settled");
+        LogRecord r #= log.event(Level.INFO, "payment settled");
         r.str("route", route).i64("ms", ms);
         log.emit(#r);
     }
@@ -52,7 +52,7 @@ class InventoryService {
     }
 
     public void reserve(String sku, int64 units) {
-        LogRecord r = log.event(Level.INFO, "stock reserved");
+        LogRecord r #= log.event(Level.INFO, "stock reserved");
         r.str("sku", sku).i64("units", units);
         log.emit(#r);
     }
@@ -90,9 +90,9 @@ public final class LoggingTourDi {
         // 3. Per-module loggers from the SAME factory at DIFFERENT
         //    thresholds — the "chatty module quieted in prod" shape. Both
         //    borrow the one profile-selected encoder/appender pair.
-        Logger gw = LoggerFactory.__cajeta_inject()
+        Logger gw #= LoggerFactory.__cajeta_inject()
             .loggerFor("orders.gateway", Level.INFO);
-        Logger noisy = LoggerFactory.__cajeta_inject()
+        Logger noisy #= LoggerFactory.__cajeta_inject()
             .loggerFor("orders.resolver", Level.WARN);
         d.check(gw.enabled(Level.INFO) && !noisy.enabled(Level.INFO)
             && noisy.enabled(Level.WARN),

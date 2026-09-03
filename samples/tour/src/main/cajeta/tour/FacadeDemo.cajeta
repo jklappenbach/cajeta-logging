@@ -28,7 +28,7 @@ public class FacadeDemo extends DemoClass {
         System.stdout.println("-- The facade: Log.console, level methods, fielded records --");
 
         // Narration: real JSONL on stdout, exactly what ops sees.
-        Logger log = Log.console("orders.service", Level.INFO);
+        Logger log #= Log.console("orders.service", Level.INFO);
         log.info("service started");
         log.warn("queue depth above threshold");
         log.error("downstream refused connection");
@@ -54,7 +54,7 @@ public class FacadeDemo extends DemoClass {
 
         // Fielded records: the slow-request shape — route, latency, retry
         // flag, and the p99 the alert fired on.
-        LogRecord slow = twin.event(Level.WARN, "slow request");
+        LogRecord slow #= twin.event(Level.WARN, "slow request");
         slow.str("route", "/checkout").i64("ms", 1200).flag("retried", true)
             .f64("p99", 0.987);
         twin.emit(#slow);
@@ -74,7 +74,7 @@ public class FacadeDemo extends DemoClass {
         // must not even construct the record.
         boolean built = false;
         if (twin.enabled(Level.DEBUG)) {
-            LogRecord d = twin.event(Level.DEBUG, "expensive diagnostics");
+            LogRecord d #= twin.event(Level.DEBUG, "expensive diagnostics");
             d.i64("cache_entries", 123456);
             twin.emit(#d);
             built = true;
