@@ -30,7 +30,7 @@ public class AppenderTest {
         // FileAppender flushes per line, so bytes are on disk after emit; the
         // logger owns `out` and drops it at scope end (no read of `out` here).
 
-        int8[] bytes = File.readAllBytes(path);
+        int8[] bytes #= File.readAllBytes(path);
         int32 n = (int32) bytes.count();
         String content = heap String(#bytes, n);
         Assert.that(content).contains("\"msg\":\"first\"");
@@ -48,7 +48,7 @@ public class AppenderTest {
         log.info("should not appear");
         log.warn("kept");
 
-        int8[] bytes = File.readAllBytes(path);
+        int8[] bytes #= File.readAllBytes(path);
         int32 n = (int32) bytes.count();
         String content = heap String(#bytes, n);
         Assert.that(content).contains("\"msg\":\"kept\"");
@@ -68,9 +68,9 @@ public class AppenderTest {
         Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), #out);
         log.info("teed");
 
-        int8[] ba = File.readAllBytes(pathA);
+        int8[] ba #= File.readAllBytes(pathA);
         String a = heap String(#ba, (int32) ba.count());
-        int8[] bb = File.readAllBytes(pathB);
+        int8[] bb #= File.readAllBytes(pathB);
         String b = heap String(#bb, (int32) bb.count());
         Assert.that(a).contains("\"msg\":\"teed\"");
         Assert.that(b).contains("\"msg\":\"teed\"");
