@@ -17,7 +17,7 @@
 #
 # The toolchain default tracks release.yml's pin and moved with it from
 # v0.26.0 to v0.29.0. A bridge publish builds the sibling's artifact for real,
-# and from v0.29.0 the compiler re-runs its ownership checks over a dependency
+# and from v0.28.0 the compiler re-runs its ownership checks over a dependency
 # archive's own sources, so a default left behind would hand Olla an archive
 # cut by a compiler no consumer is installing.
 

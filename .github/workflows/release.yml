@@ -22,7 +22,7 @@ jobs:
       # Raised to v0.12.1 with the unit-6 tour rewrite: the expanded tour is
       # authored and verified against the 0.12 line.
       # Raised to v0.29.0 for the archive a consumer actually re-checks. From
-      # v0.29.0 the compiler re-runs its ownership checks over a dependency
+      # v0.28.0 the compiler re-runs its ownership checks over a dependency
       # archive's OWN sources, so what a consumer compiles is the archive we
       # cut, not just the API it exposes. Cutting on the compiler consumers
       # install is what makes their re-check the same one this gate ran. It is
