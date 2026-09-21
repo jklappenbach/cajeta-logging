@@ -6,3 +6,9 @@
 # Never source. Committed cache also risks feeding a stale artifact to a
 # different toolchain than the one that produced it.
 **/.cajeta/cache/
+
+# Repo-local scratch. Release work stages toolchain debs, extracted
+# toolchains and gate logs here. That is hundreds of megabytes which must
+# never reach a commit, and it is why nothing in this project writes to
+# the system temp directory.
+tmp/
