@@ -12,12 +12,14 @@ import cajeta.lang.String;
  * open. Flushes per line for durability — a buffered / worker-fiber variant is
  * a later pass (`AsyncAppender`, Phase 3). Call `close()` to release the fd.
  *
+ * Not a `@Component`. The default sink is the console, and a deployment that
+ * wants a file binds one by declaring its own `@Component` returning this.
+ *
  * ```cajeta
  * FileAppender out = heap FileAppender("/var/log/app.jsonl", OpenMode.APPEND);
  * Logger log = heap Logger("svc", Level.INFO, heap JsonlEncoder(), #out);
  * ```
  */
-@Component @Profile("prod")
 public final class FileAppender implements Appender {
     FileWriter writer;
 
@@ -25,9 +27,7 @@ public final class FileAppender implements Appender {
         this.writer = File.openWrite(path, mode);
     }
 
-    // No-arg ctor for DI: the `Appender` under `--profile=prod`, appending
-    // JSONL to a default `app.jsonl`. A configurable path / rolling policy is a
-    // follow-up (see plan/logging-plan.md).
+    /** Appends to `app.jsonl` in the working directory. Prefer naming a path. */
     public FileAppender() {
         this.writer = File.openWrite("app.jsonl", OpenMode.APPEND);
     }

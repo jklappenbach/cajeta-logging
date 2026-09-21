@@ -7,6 +7,8 @@ cd "$(dirname "$0")/.."
 
 ./run-tests.sh
 
+./scripts/check-default-appender.sh
+
 PROFILE=dev  ./samples/tour/run.sh
 PROFILE=prod ./samples/tour/run.sh
 PROFILE=test ./samples/tour/run.sh

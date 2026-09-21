@@ -15,10 +15,11 @@ set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$here/../.." && pwd)"
+mkdir -p "$root/tmp"
 CAJETA="${CAJETA:-cajeta}"
 PROFILE="${PROFILE:-dev}"
 
-out="$(mktemp -d)"
+out="$(mktemp -d "$root/tmp/tour.XXXXXX")"
 trap 'rm -rf "$out"' EXIT
 
 srcroot="$out/src"
@@ -34,26 +35,29 @@ cp -r "$here/src-di/cajeta/." "$srcroot/"
 # Say up front where the DI section's lines will go, so nothing "vanishes".
 case "$PROFILE" in
   dev)  echo ">> DI profile: dev  — service-scenario lines print below as TEXT (console appender)";;
-  prod) echo ">> DI profile: prod — service-scenario lines land in ./app.jsonl (file appender), not on the console";;
+  prod) echo ">> DI profile: prod — service-scenario lines print below as JSONL (console appender)";;
   test) echo ">> DI profile: test — service-scenario lines are CAPTURED by the masking CapturingAppender; they are not printed anywhere (the sink tests assert through)";;
   *)    echo ">> DI profile: $PROFILE";;
 esac
 
-# prod writes into the CURRENT directory; run from a scratch dir so the
-# tour never litters the invoker's cwd, then verify the destination.
+# Run from a scratch dir so a stray sink cannot litter the invoker's cwd, and
+# keep stdout so the profile's destination can be verified rather than assumed.
 rundir="$out/run"
 mkdir -p "$rundir"
 status=0
-( cd "$rundir" && "$out/logging-tour" ) || status=$?
+( cd "$rundir" && "$out/logging-tour" ) > "$out/stdout.log" 2>&1 || status=$?
+cat "$out/stdout.log"
 
 if [[ "$PROFILE" == "prod" ]]; then
-    if grep -q '"msg":"payment settled"' "$rundir/app.jsonl" 2>/dev/null; then
-        echo ">> verified: app.jsonl carries the JSONL service lines, e.g."
-        tail -1 "$rundir/app.jsonl"
-    else
-        echo ">> FAIL: prod profile did not write the expected app.jsonl" >&2
+    if ! grep -q '"msg":"payment settled"' "$out/stdout.log"; then
+        echo ">> FAIL: prod profile did not print the JSONL service lines to stdout" >&2
         exit 1
     fi
+    if [[ -f "$rundir/app.jsonl" ]]; then
+        echo ">> FAIL: prod bound a file sink and wrote app.jsonl" >&2
+        exit 1
+    fi
+    echo ">> verified: stdout carries the JSONL service lines, and no file sink was bound"
 fi
 
 exit "$status"

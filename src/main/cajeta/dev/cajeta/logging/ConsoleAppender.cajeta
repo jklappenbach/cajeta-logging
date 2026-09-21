@@ -4,10 +4,12 @@ import cajeta.lang.String;
 
 /**
  * Writes each encoded line to stdout via `println` (which supplies the newline).
- * A TTY-gated colorized variant is a Phase-3 concern; this is the plain sink.
- * The `Appender` under `--profile=dev` (human-readable text to the console).
+ * A TTY-gated colorized variant is a Phase-3 concern, this is the plain sink.
+ *
+ * The DEFAULT `Appender`, carrying no `@Profile` so it binds under every one.
+ * A deployment wanting a file or a socket declares its own `@Component`.
  */
-@Component @Profile("dev")
+@Component
 public final class ConsoleAppender implements Appender {
 
     public ConsoleAppender() {
