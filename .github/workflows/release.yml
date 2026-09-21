@@ -21,7 +21,18 @@ jobs:
       # which is how cajeta-unit silently built against v0.7.1 for a month.
       # Raised to v0.12.1 with the unit-6 tour rewrite: the expanded tour is
       # authored and verified against the 0.12 line.
-      cajeta-version: v0.26.0
+      # Raised to v0.29.0 for the archive a consumer actually re-checks. From
+      # v0.29.0 the compiler re-runs its ownership checks over a dependency
+      # archive's OWN sources, so what a consumer compiles is the archive we
+      # cut, not just the API it exposes. Cutting on the compiler consumers
+      # install is what makes their re-check the same one this gate ran. It is
+      # measured on both sides: our sources draw no ownership diagnostic under
+      # v0.29.0, and a v0.29.0 consumer of the published archive builds clean.
+      # The dev-dependency moved for a harder reason. On v0.29.0 the suite
+      # would not build at all against dev.cajeta.unit 0.2.4, which fails its
+      # own CAPTURED_BORROW_PARAM check on a field named `pred` that exists
+      # nowhere in this repo. 0.3.0 is the archive cut for these checks.
+      cajeta-version: v0.29.0
       # Suite + tour (all three DI profiles) + tour-coverage gate, chained in
       # scripts/ci-checks.sh. run-tests.sh compiles the library + test sources
       # together under --profile=test (the DI graph must resolve in the final

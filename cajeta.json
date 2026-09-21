@@ -36,8 +36,14 @@
         // dev.cajeta.unit drives the suite (reflective @Test discovery); the
         // starter's `cajeta.testkit` placeholder named a package that exists in
         // no repository and is gone.
+        //
+        // Raised 0.2.4 -> 0.3.0 with the v0.29.0 toolchain. From v0.29.0 the
+        // compiler re-runs its ownership checks over a dependency archive's
+        // own sources, and 0.2.4 fails its own CAPTURED_BORROW_PARAM check on
+        // a field named `pred` that exists nowhere in this repo, so the suite
+        // would not build at all. 0.3.0 is the archive cut for these checks.
         "dev-dependencies": {
-            "dev.cajeta.unit": "0.2.4"
+            "dev.cajeta.unit": "0.3.0"
         },
 
         "repositories": [
