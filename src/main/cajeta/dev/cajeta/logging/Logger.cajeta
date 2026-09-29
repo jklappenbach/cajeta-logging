@@ -31,8 +31,8 @@ public final class Logger {
     public Logger(String name, Level threshold, LogEncoder encoder, Appender appender) {
         this.name = name;
         this.threshold = threshold;
-        this.encoder = encoder;
-        this.appender = appender;
+        this.encoder #= encoder;
+        this.appender #= appender;
     }
 
     /** Whether a record at `l` would be emitted (use to guard fielded builds). */
