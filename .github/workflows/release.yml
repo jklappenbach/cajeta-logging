@@ -32,7 +32,8 @@ jobs:
       # would not build at all against dev.cajeta.unit 0.2.4, which fails its
       # own CAPTURED_BORROW_PARAM check on a field named `pred` that exists
       # nowhere in this repo. 0.3.0 is the archive cut for these checks.
-      cajeta-version: v0.29.0
+      # v0.32.0 checks a kept interface formal, which 0.8.1 is the cut for.
+      cajeta-version: v0.32.0
       # Suite + tour (all three DI profiles) + tour-coverage gate, chained in
       # scripts/ci-checks.sh. run-tests.sh compiles the library + test sources
       # together under --profile=test (the DI graph must resolve in the final
