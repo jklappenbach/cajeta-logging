@@ -12,7 +12,7 @@
 
     "details": {
         "name":               "dev.cajeta.logging",
-        "version":            "0.8.2",
+        "version":            "0.8.3",
         "description":        "cajeta-logging — levels, appenders, patterns, DI-wired LoggerFactory",
         "license":            "Apache-2.0",
         "authors":            ["Julian Klappenbach"],

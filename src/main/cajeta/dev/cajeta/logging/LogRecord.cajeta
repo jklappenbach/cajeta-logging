@@ -35,7 +35,7 @@ public final class LogRecord {
     /** Add a string-valued field. */
     public LogRecord str(String key, String value) {
         LogField f = heap LogField(key, 0);
-        f.sval = value;
+        f.sval #= value;
         this.fields.add(#f);
         return this;
     }
