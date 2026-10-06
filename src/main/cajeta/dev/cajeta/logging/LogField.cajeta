@@ -19,7 +19,7 @@ public final class LogField {
     public float64 fval;
 
     public LogField(String key, int32 kind) {
-        this.key = key;
+        this.key #= key;
         this.kind = kind;
         this.sval = "";
         this.ival = 0;

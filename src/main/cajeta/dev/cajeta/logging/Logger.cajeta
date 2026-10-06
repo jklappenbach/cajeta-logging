@@ -29,7 +29,7 @@ public final class Logger {
     // lends a shared instance (a DI singleton, via LoggerFactory) makes the
     // field borrow, and the logger's drop leaves the shared sink alone.
     public Logger(String name, Level threshold, LogEncoder encoder, Appender appender) {
-        this.name = name;
+        this.name #= name;
         this.threshold = threshold;
         this.encoder #= encoder;
         this.appender #= appender;

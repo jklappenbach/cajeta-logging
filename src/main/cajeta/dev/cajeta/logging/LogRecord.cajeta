@@ -27,8 +27,8 @@ public final class LogRecord {
     public LogRecord(int64 ts, Level level, String logger, String msg) {
         this.ts = ts;
         this.level = level;
-        this.logger = logger;
-        this.msg = msg;
+        this.logger #= logger;
+        this.msg #= msg;
         this.fields = heap ArrayList<LogField>();
     }
 
