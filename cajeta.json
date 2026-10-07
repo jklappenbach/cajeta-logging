@@ -12,7 +12,7 @@
 
     "details": {
         "name":               "dev.cajeta.logging",
-        "version":            "0.8.3",
+        "version":            "0.8.4",
         "description":        "cajeta-logging — levels, appenders, patterns, DI-wired LoggerFactory",
         "license":            "Apache-2.0",
         "authors":            ["Julian Klappenbach"],
@@ -42,9 +42,9 @@
         // own sources, and 0.2.4 fails its own CAPTURED_BORROW_PARAM check on
         // a field named `pred` that exists nowhere in this repo, so the suite
         // would not build at all. 0.3.0 is the archive cut for these checks.
-        // Raised to 0.3.3 with the v0.35.0 toolchain and its field-store rule.
+        // Raised to 0.3.4 with the v0.36.0 toolchain.
         "dev-dependencies": {
-            "dev.cajeta.unit": "0.3.3"
+            "dev.cajeta.unit": "0.3.4"
         },
 
         "repositories": [
