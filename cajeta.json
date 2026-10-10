@@ -12,7 +12,7 @@
 
     "details": {
         "name":               "dev.cajeta.logging",
-        "version":            "0.8.5",
+        "version":            "0.8.6",
         "description":        "cajeta-logging — levels, appenders, patterns, DI-wired LoggerFactory",
         "license":            "Apache-2.0",
         "authors":            ["Julian Klappenbach"],
@@ -44,8 +44,9 @@
         // would not build at all. 0.3.0 is the archive cut for these checks.
         // Raised to 0.3.4 with the v0.36.0 toolchain.
         // Raised to 0.3.5 with the v0.38.0 toolchain.
+        // Raised to 0.3.6 with the v0.39.0 toolchain.
         "dev-dependencies": {
-            "dev.cajeta.unit": "0.3.5"
+            "dev.cajeta.unit": "0.3.6"
         },
 
         "repositories": [
