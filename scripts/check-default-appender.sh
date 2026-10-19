@@ -17,7 +17,13 @@ CAJETA="${CAJETA:-cajeta}"
 # Always rebuild. An archive from an earlier source state carries the earlier
 # DI wiring and turns this check green for the wrong reason.
 ( cd "$REPO_ROOT" && "$CAJETA" build )
-CJA="$( ls "$REPO_ROOT"/build/archive/dev.cajeta.logging-*.cja | head -1 )"
+# The archive this build wrote, by the version cajeta.json declares. A glob
+# picks the lexically first archive, and build/archive keeps every version
+# ever built: on a long-lived checkout that was 0.7.0, whose default wiring
+# bound a file sink, so this check failed against the wrong archive.
+VERSION="$( sed -n 's/^ *"version": *"\([^"]*\)".*/\1/p' "$REPO_ROOT/cajeta.json" | head -1 )"
+CJA="$REPO_ROOT/build/archive/dev.cajeta.logging-$VERSION.cja"
+[ -f "$CJA" ] || { echo "FAIL: the build wrote no $CJA" >&2; exit 1; }
 
 WORK="$REPO_ROOT/tmp/default-appender"
 rm -rf "$WORK"; mkdir -p "$WORK/src/probe" "$WORK/w"
