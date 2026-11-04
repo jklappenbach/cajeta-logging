@@ -39,7 +39,7 @@ jobs:
       # v0.38.0 is the fleet republish, which 0.8.5 is the cut for.
       # v0.39.0 is the fleet republish, which 0.8.6 is the cut for.
       # v0.44.0: ci-checks.sh green on it locally (cajeta-crypto plan Unit 8).
-      cajeta-version: v0.50.0
+      cajeta-version: v0.51.0
       # Suite + tour (all three DI profiles) + tour-coverage gate, chained in
       # scripts/ci-checks.sh. run-tests.sh compiles the library + test sources
       # together under --profile=test (the DI graph must resolve in the final
